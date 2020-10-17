@@ -2,7 +2,7 @@ import {
   AutocompleteRuleNames,
   ISuggestionBuilder,
   INodeProcessor
-} from 'datahub-web/utils/parsers/autocomplete/types';
+} from 'wherehows-web/utils/parsers/autocomplete/types';
 
 export const logicalOperatorsProcessor: INodeProcessor = {
   /**

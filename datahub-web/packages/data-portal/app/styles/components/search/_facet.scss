@@ -10,11 +10,9 @@
   }
 
   &__title {
-    display: flex;
-    flex-flow: row wrap;
     margin: 0;
     font-size: 16px;
-    font-weight: fw(normal, 6);
+    font-weight: 400;
   }
 
   &__checkbox-wrapper {
@@ -24,11 +22,11 @@
   }
 
   &__label {
-    font-weight: fw(normal, 4);
+    font-weight: 300;
   }
 
   &__count {
-    font-weight: fw(normal, 4);
+    font-weight: 300;
 
     &::before {
       content: '(';
@@ -41,10 +39,6 @@
 
   &__option--empty {
     color: rgba(0, 0, 0, 0.6);
-  }
-
-  &__dynamic-header {
-    margin-top: 15px;
   }
 }
 
@@ -61,7 +55,7 @@
 
   &__title {
     margin: 0;
-    font-weight: fw(normal, 6);
+    font-weight: 400;
   }
 
   &__empty {

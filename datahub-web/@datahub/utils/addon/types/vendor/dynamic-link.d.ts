@@ -1,7 +1,7 @@
-export interface IDynamicLinkNode<ModelType = undefined, Route = string, QueryParams extends {} = {}> {
+export interface IDynamicLinkNode<T, Z = string, P extends {} = {}> {
   title: string;
   text: string;
-  route: Route;
-  model?: ModelType;
-  queryParams?: QueryParams;
+  route: Z;
+  model?: T;
+  queryParams?: P;
 }

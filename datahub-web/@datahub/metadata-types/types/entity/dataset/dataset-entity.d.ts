@@ -1,14 +1,6 @@
 import { FabricType } from '@datahub/metadata-types/constants/common/fabric-type';
 import { DatasetPlatform } from '@datahub/metadata-types/constants/entity/dataset/platform';
 
-/**
- * TODO META-11674
- *
- * DEPRECATED This model correspond to
- * https://jarvis.corp.linkedin.com/codesearch/result/?name=DatasetView.java&path=wherehows-frontend%2Fdatahub-dao%2Fsrc%2Fmain%2Fjava%2Fcom%2Flinkedin%2Fdatahub%2Fmodels%2Fview&reponame=wherehows%2Fwherehows-frontend
- *
- * which should be avoided but still used in some places
- */
 export interface IDatasetEntity {
   createdTime: number;
   decommissionTime: number | null;
@@ -33,8 +25,4 @@ export interface IDatasetEntity {
   tags: Array<string>;
   // Equivalent to urn of a dataset
   uri: string;
-  // The health score for the dataset entity
-  healthScore: number;
-  // Open source support only, this property accesses a variety of properties of the dataset that are to be presented
-  customProperties?: Com.Linkedin.Dataset.DatasetProperties['customProperties'];
 }

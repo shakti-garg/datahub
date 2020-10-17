@@ -1,8 +1,10 @@
-FROM openjdk:8 as builder
-COPY . datahub-src
-RUN cd datahub-src && ./gradlew :metadata-ingestion-examples:mce-cli:build
+FROM openjdk:8
 
-FROM openjdk:8-jre-alpine
-COPY --from=builder datahub-src/metadata-ingestion-examples/mce-cli/build/libs/mce-cli.jar ./
-COPY --from=builder datahub-src/metadata-ingestion-examples/mce-cli/example-bootstrap.json ./
-CMD java -jar mce-cli.jar -m produce example-bootstrap.json
+COPY --from=python:3.6 / /
+COPY . datahub-src
+RUN cd datahub-src && ./gradlew :metadata-events:mxe-schemas:build \
+    && cp -r metadata-ingestion/mce-cli . && cd metadata-ingestion/mce-cli \
+    && pip install --user -r requirements.txt
+
+CMD cd datahub-src/metadata-ingestion/mce-cli \
+    && python mce_cli.py produce -d bootstrap_mce.dat -b $KAFKA_BOOTSTRAP_SERVER -s $KAFKA_SCHEMAREGISTRY_URL

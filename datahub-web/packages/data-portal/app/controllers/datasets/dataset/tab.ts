@@ -1,4 +1,8 @@
 import Controller from '@ember/controller';
+import BannerService from 'wherehows-web/services/banners';
+import { inject as service } from '@ember/service';
+import CurrentUser from '@datahub/shared/services/current-user';
+import { alias } from '@ember/object/computed';
 
 /**
  * Defines the class for datasets/dataset/tab route controller
@@ -10,17 +14,30 @@ import Controller from '@ember/controller';
  */
 export default class DatasetTab extends Controller {
   /**
-   * TODO META-10613: Create a util for extending controller/query param logic for bulk jit request
-   * Defines the query parameters meaningful to this route
+   * References the application banner service
+   * @type {BannerService}
+   * @memberof DatasetTab
    */
-  queryParams = ['request_jit_urns'];
+  @service
+  banners: BannerService;
 
   /**
-   * A list of dataset urns to request for JIT ACL Access provided as a query param
-   * The query param renders the request-access modal if there are urns provided
-   * @type {Array<string>}
+   * References the CurrentUser service
    */
-  request_jit_urns: Array<string> = [];
+  @service('current-user')
+  currentUser: CurrentUser;
+
+  /**
+   * Aliases the ldap username of the currently logged in user
+   */
+  @alias('currentUser.currentUser.userName')
+  userName: string;
+
+  /**
+   * If we have a relevant metric for the dataset, then its urn is stored here
+   * @type {string}
+   */
+  metric_urn?: string;
 }
 
 declare module '@ember/controller' {

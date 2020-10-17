@@ -3,10 +3,10 @@ import { setupRenderingTest } from 'ember-qunit';
 import { render } from '@ember/test-helpers';
 import hbs from 'htmlbars-inline-precompile';
 
-module('Integration | Component | empty-state', function(hooks): void {
+module('Integration | Component | empty-state', function(hooks) {
   setupRenderingTest(hooks);
 
-  test('it renders', async function(assert): Promise<void> {
+  test('it renders', async function(assert) {
     await render(hbs`<EmptyState />`);
 
     assert.equal(this.element.textContent && this.element.textContent.trim(), 'No data found');
@@ -20,7 +20,7 @@ module('Integration | Component | empty-state', function(hooks): void {
     assert.equal(this.element.textContent && this.element.textContent.trim(), 'template block text');
   });
 
-  test('it renders a heading', async function(assert): Promise<void> {
+  test('it renders a heading', async function(assert) {
     const heading = 'Not found!';
     assert.expect(1);
 
@@ -31,7 +31,7 @@ module('Integration | Component | empty-state', function(hooks): void {
     assert.equal(this.element.textContent && this.element.textContent.trim(), heading, 'shows the heading text');
   });
 
-  test('it renders a subheading', async function(assert): Promise<void> {
+  test('it renders a subheading', async function(assert) {
     const subHeading = 'We could not find any results.';
     assert.expect(1);
 

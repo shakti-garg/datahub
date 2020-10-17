@@ -4,7 +4,6 @@
     "baseUrl": ".",
     "rootDir": "../../",
     "paths": {
-      "dummy/mirage/*": ["tests/dummy/mirage/*"],
       "dummy/tests/*": ["tests/*"],
       "dummy/*": ["tests/dummy/app/*", "app/*"],
       "@datahub/data-models": ["addon"],
@@ -16,8 +15,6 @@
       "@datahub/utils/*": ["../../@datahub/utils/addon/*"],
       "@datahub/metadata-types": ["../../@datahub/metadata-types/addon"],
       "@datahub/metadata-types/*": ["../../@datahub/metadata-types/addon/*"],
-      "@nacho-ui/core": ["../../@nacho-ui/nacho-core/addon"],
-      "@nacho-ui/core/*": ["../../@nacho-ui/nacho-core/addon/*"],
       "*": ["types/*"]
     }
   },
@@ -31,7 +28,6 @@
     "../../@datahub/metadata-types/addon/**/*",
     "../../@datahub/metadata-types/types/**/*",
     "../../@datahub/utils/addon/**/*",
-    "../../@datahub/utils/types/**/*",
-    "../../@nacho-ui/nacho-core/**/*"
+    "../../@datahub/utils/types/**/*"
   ]
 }

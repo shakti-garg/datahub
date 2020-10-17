@@ -3,30 +3,16 @@ package com.linkedin.metadata.restli;
 import com.linkedin.common.AuditStamp;
 import com.linkedin.common.urn.Urn;
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.data.template.StringArray;
 import com.linkedin.data.template.UnionTemplate;
-import com.linkedin.metadata.backfill.BackfillMode;
 import com.linkedin.metadata.dao.AspectKey;
 import com.linkedin.metadata.dao.BaseLocalDAO;
-import com.linkedin.metadata.dao.ListResult;
-import com.linkedin.metadata.dao.UrnAspectEntry;
 import com.linkedin.metadata.dao.utils.ModelUtils;
-import com.linkedin.metadata.query.ExtraInfo;
-import com.linkedin.metadata.query.ExtraInfoArray;
-import com.linkedin.metadata.query.IndexCriterion;
-import com.linkedin.metadata.query.IndexCriterionArray;
-import com.linkedin.metadata.query.IndexFilter;
-import com.linkedin.metadata.query.ListResultMetadata;
 import com.linkedin.parseq.Task;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.EmptyRecord;
-import com.linkedin.restli.server.CollectionResult;
-import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.ActionParam;
-import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Optional;
-import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.resources.ComplexKeyResourceTaskTemplate;
@@ -35,16 +21,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import static com.linkedin.metadata.dao.BaseReadDAO.*;
 import static com.linkedin.metadata.restli.RestliConstants.*;
@@ -53,7 +35,7 @@ import static com.linkedin.metadata.restli.RestliConstants.*;
 /**
  * A base class for the entity rest.li resource, that supports CRUD methods.
  *
- * <p>See http://go/gma for more details
+ * See http://go/gma for more details
  *
  * @param <KEY> the resource's key type
  * @param <VALUE> the resource's value type
@@ -76,20 +58,13 @@ public abstract class BaseEntityResource<
   private final Class<SNAPSHOT> _snapshotClass;
   private final Class<ASPECT_UNION> _aspectUnionClass;
   private final Set<Class<? extends RecordTemplate>> _supportedAspectClasses;
-  private final Class<URN> _urnClass;
 
   public BaseEntityResource(@Nonnull Class<SNAPSHOT> snapshotClass, @Nonnull Class<ASPECT_UNION> aspectUnionClass) {
-    this(snapshotClass, aspectUnionClass, null);
-  }
-
-  public BaseEntityResource(@Nonnull Class<SNAPSHOT> snapshotClass,
-      @Nonnull Class<ASPECT_UNION> aspectUnionClass, @Nullable Class<URN> urnClass) {
     super();
     ModelUtils.validateSnapshotAspect(snapshotClass, aspectUnionClass);
     _snapshotClass = snapshotClass;
     _aspectUnionClass = aspectUnionClass;
     _supportedAspectClasses = ModelUtils.getValidAspectTypes(_aspectUnionClass);
-    _urnClass = urnClass;
   }
 
   /**
@@ -142,7 +117,7 @@ public abstract class BaseEntityResource<
   @RestMethod.Get
   @Nonnull
   public Task<VALUE> get(@Nonnull ComplexResourceKey<KEY, EmptyRecord> id,
-      @QueryParam(PARAM_ASPECTS) @Optional @Nullable String[] aspectNames) {
+      @QueryParam(PARAM_ASPECTS) @Optional("[]") @Nonnull String[] aspectNames) {
 
     return RestliUtils.toTask(() -> {
       final URN urn = toUrn(id.getKey());
@@ -161,7 +136,7 @@ public abstract class BaseEntityResource<
   @Nonnull
   public Task<Map<ComplexResourceKey<KEY, EmptyRecord>, VALUE>> batchGet(
       @Nonnull Set<ComplexResourceKey<KEY, EmptyRecord>> ids,
-      @QueryParam(PARAM_ASPECTS) @Optional @Nullable String[] aspectNames) {
+      @QueryParam(PARAM_ASPECTS) @Optional("[]") @Nonnull String[] aspectNames) {
     return RestliUtils.toTask(() -> {
       final Map<ComplexResourceKey<KEY, EmptyRecord>, URN> urnMap =
           ids.stream().collect(Collectors.toMap(Function.identity(), id -> toUrn(id.getKey())));
@@ -202,7 +177,7 @@ public abstract class BaseEntityResource<
   @Action(name = ACTION_GET_SNAPSHOT)
   @Nonnull
   public Task<SNAPSHOT> getSnapshot(@ActionParam(PARAM_URN) @Nonnull String urnString,
-      @ActionParam(PARAM_ASPECTS) @Optional @Nullable String[] aspectNames) {
+      @ActionParam(PARAM_ASPECTS) @Optional("[]") @Nonnull String[] aspectNames) {
 
     return RestliUtils.toTask(() -> {
       final URN urn = parseUrnParam(urnString);
@@ -223,13 +198,11 @@ public abstract class BaseEntityResource<
 
   /**
    * An action method for emitting MAE backfill messages for an entity.
-   *
-   * @deprecated Use {@link #backfill(String[], String[])} instead
    */
-  @Action(name = ACTION_BACKFILL_LEGACY)
+  @Action(name = ACTION_BACKFILL)
   @Nonnull
-  public Task<BackfillResult> backfill(@ActionParam(PARAM_URN) @Nonnull String urnString,
-      @ActionParam(PARAM_ASPECTS) @Optional @Nullable String[] aspectNames) {
+  public Task<String[]> backfill(@ActionParam(PARAM_URN) @Nonnull String urnString,
+      @ActionParam(PARAM_ASPECTS) @Optional("[]") @Nonnull String[] aspectNames) {
 
     return RestliUtils.toTask(() -> {
       final URN urn = parseUrnParam(urnString);
@@ -238,218 +211,20 @@ public abstract class BaseEntityResource<
           .filter(optionalAspect -> optionalAspect.isPresent())
           .map(optionalAspect -> ModelUtils.getAspectName(optionalAspect.get().getClass()))
           .collect(Collectors.toList());
-      return new BackfillResult().setEntities(new BackfillResultEntityArray(Collections.singleton(
-          new BackfillResultEntity().setUrn(urn).setAspects(new StringArray(backfilledAspects))
-      )));
-    });
-  }
-
-  /**
-   * An action method for emitting MAE backfill messages for a set of entities.
-   */
-  @Action(name = ACTION_BACKFILL_WITH_URNS)
-  @Nonnull
-  public Task<BackfillResult> backfill(@ActionParam(PARAM_URNS) @Nonnull String[] urns,
-                                       @ActionParam(PARAM_ASPECTS) @Optional @Nullable String[] aspectNames) {
-
-    return RestliUtils.toTask(() -> {
-      final Set<URN> urnSet = Arrays.stream(urns).map(urnString -> parseUrnParam(urnString)).collect(Collectors.toSet());
-      return buildBackfillResult(getLocalDAO().backfill(parseAspectsParam(aspectNames), urnSet));
-    });
-  }
-
-  /**
-   * An action method for emitting MAE backfill messages for a set of entities using SCSI.
-   */
-  @Action(name = ACTION_BACKFILL)
-  @Nonnull
-  public Task<BackfillResult> backfill(@ActionParam(PARAM_MODE) @Nonnull BackfillMode mode,
-      @ActionParam(PARAM_ASPECTS) @Optional @Nullable String[] aspectNames,
-      @ActionParam(PARAM_URN) @Optional @Nullable String lastUrn,
-      @ActionParam(PARAM_LIMIT) int limit) {
-
-    return RestliUtils.toTask(() ->
-            buildBackfillResult(getLocalDAO().backfill(mode, parseAspectsParam(aspectNames),
-                    _urnClass,
-                    parseUrnParam(lastUrn),
-                    limit)));
-  }
-
-  @Nonnull
-  private BackfillResult buildBackfillResult(@Nonnull Map<URN, Map<Class<? extends RecordTemplate>,
-          java.util.Optional<? extends RecordTemplate>>> backfilledAspects) {
-
-    final Set<URN> urns = new TreeSet<>(Comparator.comparing(Urn::toString));
-    urns.addAll(backfilledAspects.keySet());
-    return new BackfillResult().setEntities(new BackfillResultEntityArray(
-            urns.stream().map(urn -> buildBackfillResultEntity(urn, backfilledAspects.get(urn)))
-                    .collect(Collectors.toList())));
-  }
-
-  @Nonnull
-  private BackfillResultEntity buildBackfillResultEntity(@Nonnull URN urn, Map<Class<? extends RecordTemplate>,
-          java.util.Optional<? extends RecordTemplate>> aspectMap) {
-
-    return new BackfillResultEntity()
-            .setUrn(urn)
-            .setAspects(new StringArray(aspectMap.entrySet().stream()
-                    .filter(aspect -> aspect.getValue().isPresent())
-                    .map(aspect -> aspect.getKey().getCanonicalName())
-                    .collect(Collectors.toList()))
-            );
-  }
-
-  /**
-   * For strongly consistent local secondary index, this provides {@link IndexFilter} which uses FQCN of the entity urn to filter
-   * on the aspect field of the index table. This serves the purpose of returning urns that are of given entity type from index table.
-   */
-  @Nonnull
-  private IndexFilter getDefaultIndexFilter() {
-    if (_urnClass == null) {
-      throw new UnsupportedOperationException("Urn class has not been defined in BaseEntityResource");
-    }
-    final IndexCriterion indexCriterion = new IndexCriterion().setAspect(_urnClass.getCanonicalName());
-    return new IndexFilter().setCriteria(new IndexCriterionArray(indexCriterion));
-  }
-
-  /**
-   * An action method for getting filtered urns from local secondary index.
-   * If no filter conditions are provided, then it returns urns of given entity type.
-   *
-   * @param indexFilter {@link IndexFilter} that defines the filter conditions
-   * @param lastUrn last urn of the previous fetched page. For the first page, this should be set as NULL
-   * @param limit maximum number of distinct urns to return
-   * @return Array of urns represented as string
-   *
-   * @deprecated Use {@link #filter(IndexFilter, String[], String, PagingContext)} instead
-   */
-  @Action(name = ACTION_LIST_URNS_FROM_INDEX)
-  @Nonnull
-  public Task<String[]> listUrnsFromIndex(@ActionParam(PARAM_FILTER) @Optional @Nullable IndexFilter indexFilter,
-      @ActionParam(PARAM_URN) @Optional @Nullable String lastUrn, @ActionParam(PARAM_LIMIT) int limit) {
-
-    final IndexFilter filter = indexFilter == null ? getDefaultIndexFilter() : indexFilter;
-
-    return RestliUtils.toTask(() ->
-        getLocalDAO()
-            .listUrns(filter, parseUrnParam(lastUrn), limit)
-            .getValues()
-            .stream()
-            .map(Urn::toString)
-            .collect(Collectors.toList())
-            .toArray(new String[0]));
-  }
-
-  /**
-   * Returns {@link CollectionResult} containing ordered list of values of multiple entities obtained after filtering urns
-   * from local secondary index. The returned list is ordered lexicographically by the string representation of the URN.
-   * The list of values is in the same order as the list of urns contained in {@link ListResultMetadata}.
-   *
-   * @param aspectClasses set of aspect classes that needs to be populated in the values
-   * @param filter {@link IndexFilter} that defines the filter conditions
-   * @param lastUrn last urn of the previous fetched page. For the first page, this should be set as NULL
-   * @param pagingContext {@link PagingContext} defining the paging parameters of the request
-   * @return {@link CollectionResult} containing ordered list of values of multiple entities
-   */
-  @Nonnull
-  private CollectionResult<VALUE, ListResultMetadata> filterAspects(
-      @Nonnull Set<Class<? extends RecordTemplate>> aspectClasses, @Nonnull IndexFilter filter,
-      @Nullable String lastUrn, @Nonnull PagingContext pagingContext) {
-
-    final ListResult<UrnAspectEntry<URN>> urnAspectEntries =
-        getLocalDAO().getAspects(aspectClasses, filter, parseUrnParam(lastUrn), pagingContext.getCount());
-
-    final Map<URN, List<UnionTemplate>> urnAspectsMap = new LinkedHashMap<>();
-    for (UrnAspectEntry<URN> entry : urnAspectEntries.getValues()) {
-      urnAspectsMap.compute(entry.getUrn(), (k, v) -> {
-        if (v == null) {
-          v = new ArrayList<>();
-        }
-        v.addAll(entry.getAspects()
-            .stream()
-            .map(recordTemplate -> ModelUtils.newAspectUnion(_aspectUnionClass, recordTemplate))
-            .collect(Collectors.toList()));
-        return v;
-      });
-    }
-
-    final List<VALUE> values = urnAspectsMap.entrySet()
-        .stream()
-        .map(e -> toValue(newSnapshot(e.getKey(), e.getValue())))
-        .collect(Collectors.toList());
-    final ListResultMetadata resultMetadata = new ListResultMetadata().setExtraInfos(new ExtraInfoArray(
-        urnAspectsMap.keySet().stream().map(urn -> new ExtraInfo().setUrn(urn)).collect(Collectors.toList())));
-
-    return new CollectionResult<>(new ArrayList<>(values), urnAspectEntries.getTotalCount(), resultMetadata);
-  }
-
-  /**
-   * Returns {@link CollectionResult} containing ordered list of values of multiple entities obtained after filtering urns
-   * from local secondary index. The returned list is ordered lexicographically by the string representation of the URN.
-   * The values returned do not contain any metadata aspect, only parts of the urn (if applicable).
-   * The list of values is in the same order as the list of urns contained in {@link ListResultMetadata}.
-   *
-   * @param filter {@link IndexFilter} that defines the filter conditions
-   * @param lastUrn last urn of the previous fetched page
-   * @param pagingContext {@link PagingContext} defining the paging parameters of the request
-   * @return {@link CollectionResult} containing ordered list of values of multiple entities
-   */
-  @Nonnull
-  private CollectionResult<VALUE, ListResultMetadata> filterUrns(@Nonnull IndexFilter filter, @Nullable String lastUrn,
-      @Nonnull PagingContext pagingContext) {
-
-    final ListResult<URN> urns = getLocalDAO().listUrns(filter, parseUrnParam(lastUrn), pagingContext.getCount());
-    final List<VALUE> values =
-        urns.getValues().stream().map(urn -> toValue(newSnapshot(urn))).collect(Collectors.toList());
-    final ListResultMetadata resultMetadata = new ListResultMetadata().setExtraInfos(new ExtraInfoArray(
-        urns.getValues().stream().map(urn -> new ExtraInfo().setUrn(urn)).collect(Collectors.toList())));
-
-    return new CollectionResult<>(new ArrayList<>(values), urns.getTotalCount(), resultMetadata);
-  }
-
-  /**
-   * Retrieves the values for multiple entities obtained after filtering urns from local secondary index. Here the value is
-   * made up of latest versions of specified aspects. If no aspects are provided, value model will not contain any metadata aspect.
-   * {@link ListResultMetadata} contains relevant list of urns.
-   *
-   * <p>If no filter conditions are provided, then it returns values of given entity type.
-   *
-   * @param indexFilter {@link IndexFilter} that defines the filter conditions
-   * @param aspectNames list of aspects to be returned in the VALUE model
-   * @param lastUrn last urn of the previous fetched page. For the first page, this should be set as NULL
-   * @param pagingContext {@link PagingContext} defining the paging parameters of the request
-   * @return {@link CollectionResult} containing values along with the associated urns in {@link ListResultMetadata}
-   */
-  @Finder(FINDER_FILTER)
-  @Nonnull
-  public Task<CollectionResult<VALUE, ListResultMetadata>> filter(
-      @QueryParam(PARAM_FILTER) @Optional @Nullable IndexFilter indexFilter,
-      @QueryParam(PARAM_ASPECTS) @Optional @Nullable String[] aspectNames,
-      @QueryParam(PARAM_URN) @Optional @Nullable String lastUrn,
-      @PagingContextParam @Nonnull PagingContext pagingContext) {
-
-    final IndexFilter filter = indexFilter == null ? getDefaultIndexFilter() : indexFilter;
-
-    return RestliUtils.toTask(() -> {
-      final Set<Class<? extends RecordTemplate>> aspectClasses = parseAspectsParam(aspectNames);
-      if (aspectClasses.isEmpty()) {
-        return filterUrns(filter, lastUrn, pagingContext);
-      } else {
-        return filterAspects(aspectClasses, filter, lastUrn, pagingContext);
-      }
+      return backfilledAspects.toArray(new String[0]);
     });
   }
 
   @Nonnull
-  protected Set<Class<? extends RecordTemplate>> parseAspectsParam(@Nullable String[] aspectNames) {
-    if (aspectNames == null) {
+  protected Set<Class<? extends RecordTemplate>> parseAspectsParam(@Nonnull String[] aspectNames) {
+    if (aspectNames.length == 0) {
       return _supportedAspectClasses;
     }
     return Arrays.asList(aspectNames).stream().map(ModelUtils::getAspectClass).collect(Collectors.toSet());
   }
 
   /**
-   * Returns a map of {@link VALUE} models given the collection of {@link URN}s and set of aspect classes.
+   * Returns a map of {@link VALUE} models given the collection of {@link URN}s and set of aspect classes
    *
    * @param urns collection of urns
    * @param aspectClasses set of aspect classes
@@ -501,20 +276,8 @@ public abstract class BaseEntityResource<
     return ModelUtils.newSnapshot(_snapshotClass, urn, aspects);
   }
 
-  /**
-   * Creates a snapshot of the entity with no aspects set, just the URN.
-   */
   @Nonnull
-  private SNAPSHOT newSnapshot(@Nonnull URN urn) {
-    return ModelUtils.newSnapshot(_snapshotClass, urn, Collections.emptyList());
-  }
-
-  @Nullable
-  private URN parseUrnParam(@Nullable String urnString) {
-    if (urnString == null) {
-      return null;
-    }
-
+  private URN parseUrnParam(@Nonnull String urnString) {
     try {
       return createUrnFromString(urnString);
     } catch (Exception e) {

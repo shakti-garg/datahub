@@ -1,4 +1,5 @@
 import { helper } from '@ember/component/helper';
+import { assert } from '@ember/debug';
 import { isArray } from '@ember/array';
 
 /**
@@ -14,12 +15,9 @@ export function findInArray<T>([list, valueOrPredicate]: [
   Array<T>,
   number | string | boolean | ((item: T) => boolean)
 ]): T | undefined {
-  if (!isArray(list)) {
-    throw new Error('expected first parameter to find-in-array helper to be an array');
-  }
-
+  assert('expected first parameter to find-in-array helper to be an array', isArray(list));
   const predicate =
-    typeof valueOrPredicate === 'function' ? valueOrPredicate : (item: unknown): boolean => item === valueOrPredicate;
+    typeof valueOrPredicate === 'function' ? valueOrPredicate : (item: unknown) => item === valueOrPredicate;
 
   return list.find(predicate);
 }

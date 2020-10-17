@@ -1,9 +1,9 @@
 package com.linkedin.datahub.models.view;
 
 import java.util.List;
-import java.util.Map;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 
 @Data
 @NoArgsConstructor
@@ -36,6 +36,4 @@ public class DatasetView {
   private Long createdTime;
 
   private Long modifiedTime;
-
-  private Map<String, String> customProperties;
 }

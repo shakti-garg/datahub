@@ -8,7 +8,6 @@
   width: 520px;
   display: flex;
   flex-direction: column;
-  overflow-y: scroll;
 
   &__header,
   &__content {
@@ -27,7 +26,7 @@
   }
 
   &__close {
-    font-weight: fw(normal, 3);
+    font-weight: fw(normal, 2);
     font-size: 48px;
     background-color: transparent;
     text-align: center;

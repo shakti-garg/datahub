@@ -1,14 +1,12 @@
 import Component from '@ember/component';
 import { set } from '@ember/object';
 import { task } from 'ember-concurrency';
-import { readUpstreamDatasetsByUrn } from 'datahub-web/utils/api/datasets/lineage';
-import { DatasetLineageList } from '@datahub/metadata-types/types/entity/dataset/lineage';
+import { readUpstreamDatasetsByUrn } from 'wherehows-web/utils/api/datasets/lineage';
+import { LineageList } from 'wherehows-web/typings/api/datasets/relationships';
 import { containerDataSource } from '@datahub/utils/api/data-source';
 import { ETaskPromise } from '@datahub/utils/types/concurrency';
-import { IDatasetLineage } from '@datahub/metadata-types/types/entity/dataset/lineage';
-import { map } from '@ember/object/computed';
 
-@containerDataSource<DatasetLineageUpstreamsContainer>('getDatasetUpstreamsTask', ['urn'])
+@containerDataSource('getDatasetUpstreamsTask', ['urn'])
 export default class DatasetLineageUpstreamsContainer extends Component {
   /**
    * Urn string for the related dataset, supplied as an external attribute
@@ -19,29 +17,24 @@ export default class DatasetLineageUpstreamsContainer extends Component {
 
   /**
    * List of upstream datasets for this urn
+   * @type {LineageList}
    * @memberof DatasetLineageUpstreamsContainer
    */
-  upstreams: DatasetLineageList = [];
-
-  /**
-   * A map returning the dataset urns from the upstreams list
-   */
-  @map('upstreams', (upstream: IDatasetLineage): string => upstream.dataset.uri)
-  upstreamUrns!: Array<string>;
+  upstreams: LineageList = [];
 
   /**
    * Task to request and set dataset upstreams for this urn
    * @type {TaskProperty<Promise<Relationships>> & {perform: (a?: {} | undefined) => TaskInstance<Promise<Relationships>>}}
    * @memberof DatasetLineageUpstreamsContainer
    */
-  @task(function*(this: DatasetLineageUpstreamsContainer): IterableIterator<Promise<DatasetLineageList>> {
-    let upstreams: DatasetLineageList = [];
+  @task(function*(this: DatasetLineageUpstreamsContainer): IterableIterator<Promise<LineageList>> {
+    let upstreams: LineageList = [];
 
     try {
-      upstreams = ((yield readUpstreamDatasetsByUrn(this.urn)) as unknown) as DatasetLineageList;
+      upstreams = yield readUpstreamDatasetsByUrn(this.urn);
     } finally {
       set(this, 'upstreams', upstreams);
     }
   })
-  getDatasetUpstreamsTask!: ETaskPromise<DatasetLineageList>;
+  getDatasetUpstreamsTask!: ETaskPromise<LineageList>;
 }

@@ -4,24 +4,24 @@ import { getJSON } from '@datahub/utils/api/fetcher';
 
 /**
  * Generic entity root path
- * @param entityEndpoint the URL path segment or endpoint for the specific entity, this may be different from the entity name
+ * @param entityType the entity type that API accepts
  * @param version version of the API, defaulted to V2
  */
-export const entityApiRoot = (entityEndpoint: string, version: ApiVersion = ApiVersion.v2): string =>
-  `${getApiRoot(version)}/${entityEndpoint}`;
+export const entityApiRoot = (entityType: string, version: ApiVersion = ApiVersion.v2): string =>
+  `${getApiRoot(version)}/${entityType}`;
 
 /**
  * Generic entity read api url
  * @param urn urn for the entity
- * @param entityEndpoint the URL path segment or endpoint for the specific entity, this may be different from the entity name
+ * @param entityType the entity type that API accepts
  */
-export const entityApiByUrn = (urn: string, entityEndpoint: string): string =>
-  `${entityApiRoot(entityEndpoint)}/${encodeUrn(urn)}`;
+export const entityApiByUrn = (urn: string, entityType: string): string =>
+  `${entityApiRoot(entityType)}/${encodeUrn(urn)}`;
 
 /**
  * Generic entity read api call
  * @param urn urn for the entity
- * @param entityEndpoint the URL path segment or endpoint for the specific entity, this may be different from the entity name
+ * @param entityType the entity type that API accepts
  */
-export const readEntity = <E>(urn: string, entityEndpoint: string): Promise<E> =>
-  getJSON<E>({ url: entityApiByUrn(urn, entityEndpoint) });
+export const readEntity = <E>(urn: string, entityType: string): Promise<E> =>
+  getJSON<E>({ url: entityApiByUrn(urn, entityType) });

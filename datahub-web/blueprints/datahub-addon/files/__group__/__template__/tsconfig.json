@@ -10,19 +10,8 @@
       "<%= destination %>/<%= dasherizedModuleName %>/*": ["addon/*"],
       "<%= destination %>/<%= dasherizedModuleName %>/test-support": ["addon-test-support"],
       "<%= destination %>/<%= dasherizedModuleName %>/test-support/*": ["addon-test-support/*"],
-      "*": ["types/*"],
-      "@datahub/utils": ["../../@datahub/utils/addon"],
-      "@datahub/utils/*": ["../../@datahub/utils/addon/*"],
+      "*": ["types/*"]
     }
   },
-  "include": [
-    "app/**/*",
-    "addon/**/*",
-    "tests/**/*",
-    "types/**/*",
-    "test-support/**/*",
-    "addon-test-support/**/*",
-    "../../@datahub/utils/addon/**/*",
-    "../../@datahub/utils/types/**/*"
-  ]
+  "include": ["app/**/*", "addon/**/*", "tests/**/*", "types/**/*", "test-support/**/*", "addon-test-support/**/*"]
 }

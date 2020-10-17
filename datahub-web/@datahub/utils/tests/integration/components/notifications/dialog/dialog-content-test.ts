@@ -5,10 +5,10 @@ import hbs from 'htmlbars-inline-precompile';
 
 const modalContentClass = '.notification-confirm-modal__content';
 
-module('Integration | Component | notifications/dialog/dialog-content', function(hooks): void {
+module('Integration | Component | notifications/dialog/dialog-content', function(hooks) {
   setupRenderingTest(hooks);
 
-  test('Content component rendering', async function(assert): Promise<void> {
+  test('Content component rendering', async function(assert) {
     const content = 'Dialog Content';
     this.set('content', content);
 

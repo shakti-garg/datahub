@@ -2,7 +2,7 @@ import Component from '@ember/component';
 // @ts-ignore: Ignore import of compiled template
 import template from '../../../templates/components/user/profile/page-content';
 import { layout, classNames } from '@ember-decorators/component';
-import { noop } from 'lodash';
+import { noop } from '@datahub/utils/function/noop';
 
 export const baseProfileContentClass = 'user-profile-content';
 

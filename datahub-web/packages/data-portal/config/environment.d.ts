@@ -6,15 +6,13 @@
  * since different ember addons can materialize new entries.
  */
 declare const config: {
-  environment: 'development' | 'test' | 'production';
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  environment: any;
   modulePrefix: string;
   podModulePrefix: string;
   locationType: string;
   rootURL: string;
-  APP: {
-    // Alternate value for notifications service toast delay, used in test runs
-    notificationsTimeout?: number;
-  };
+  APP: {};
 };
 
 export default config;

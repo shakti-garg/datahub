@@ -6,34 +6,34 @@ import javax.annotation.Nonnull;
 import lombok.Data;
 
 
-/**
- * Getter & setter class for schema event metadata.
+/***
+ *  Getter & setter class for schema event metadata.
  */
 @Data
 public class EventSpec {
-  // delta model for partial update, such as: com.linkedin.datasetGroup.MembershipDelta.
-  protected String delta;
-
-  // fullValueType of the model, such as: com.linkedin.identity.CorpUserInfo.
-  protected String fullValueType;
-
-  // namespace of the model, such as: com.linkedin.identity.
-  protected String namespace;
+  // doc of the model, such as: For unit tests.
+  protected String doc;
 
   // specType of the model, such as: MetadataChangeEvent.
   protected String specType;
 
-  // entities leverage the model, such as: com.linkedin.common.CorpuserUrn.
+  // fullValueType of the model, such as: com.linkedin.testing.AnnotatedAspectBaz.
+  protected String fullValueType;
+
+  // namespace of the model, such as: com.linkedin.testing.
+  protected String namespace;
+
+  // entities leverage the model, such as: com.linkedin.common.FooBarUrn.
   protected Set<String> urnSet = new HashSet<>();
 
-  // valueType of the model, such as: CorpUserInfo.
+  // valueType of the model, such as: AnnotatedAspectBaz.
   protected String valueType;
 
   public EventSpec() {
   }
 
-  public boolean hasDelta() {
-    return delta != null && !delta.isEmpty();
+  public boolean hasDoc() {
+    return doc != null && !doc.isEmpty();
   }
 
   public void setValueType(@Nonnull String schemaFullName) {

@@ -2,23 +2,25 @@ import Component from '@ember/component';
 import { get, set, setProperties } from '@ember/object';
 import { task } from 'ember-concurrency';
 import { action } from '@ember/object';
+import UserLookup from 'wherehows-web/services/user-lookup';
 import Notifications from '@datahub/utils/services/notifications';
 import { NotificationEvent } from '@datahub/utils/constants/notifications';
-import { IOwner, IOwnerResponse } from 'datahub-web/typings/api/datasets/owners';
+import { IOwner, IOwnerResponse } from 'wherehows-web/typings/api/datasets/owners';
 import {
   OwnerType,
   readDatasetOwnersByUrn,
   readDatasetSuggestedOwnersByUrn,
   readDatasetOwnerTypesWithoutConsumer,
   updateDatasetOwnersByUrn
-} from 'datahub-web/utils/api/datasets/owners';
+} from 'wherehows-web/utils/api/datasets/owners';
 import { inject as service } from '@ember/service';
-import { getConfig } from '@datahub/shared/services/configurator';
-import { containerDataSource } from '@datahub/utils/api/data-source';
-import { ETaskPromise } from '@datahub/utils/types/concurrency';
 import { IAppConfig } from '@datahub/shared/types/configurator/configurator';
+import { getConfig } from 'wherehows-web/services/configurator';
+import { containerDataSource } from '@datahub/utils/api/data-source';
+import { IPartyProps } from 'wherehows-web/typings/api/datasets/party-entities';
+import { ETaskPromise } from '@datahub/utils/types/concurrency';
 
-@containerDataSource<DatasetOwnershipContainer>('getContainerDataTask', ['urn'])
+@containerDataSource('getContainerDataTask', ['urn'])
 export default class DatasetOwnershipContainer extends Component {
   /**
    * The urn identifier for the dataset
@@ -52,6 +54,13 @@ export default class DatasetOwnershipContainer extends Component {
   notifications: Notifications;
 
   /**
+   * Looks up user names and properties from the partyEntities api
+   * @type {UserLookup}
+   */
+  @service('user-lookup')
+  ldapUsers: UserLookup;
+
+  /**
    * Flag indicates that a ownership metadata is inherited from an upstream dataset
    * @type {boolean}
    */
@@ -80,8 +89,20 @@ export default class DatasetOwnershipContainer extends Component {
    * An async parent task to group all data tasks for this container component
    */
   @task(function*(this: DatasetOwnershipContainer): IterableIterator<Promise<unknown> | unknown> {
-    const { getDatasetOwnersTask, getSuggestedOwnersTask, getDatasetOwnerTypesTask, getAvatarProperties } = this;
-    const tasks = [getDatasetOwnersTask, getSuggestedOwnersTask, getDatasetOwnerTypesTask, getAvatarProperties];
+    const {
+      getDatasetOwnersTask,
+      getSuggestedOwnersTask,
+      getDatasetOwnerTypesTask,
+      getAvatarProperties,
+      getUserEntitiesTask
+    } = this;
+    const tasks = [
+      getDatasetOwnersTask,
+      getSuggestedOwnersTask,
+      getDatasetOwnerTypesTask,
+      getAvatarProperties,
+      getUserEntitiesTask
+    ];
     yield* tasks.map((task): Promise<unknown> | unknown => task.perform());
   })
   getContainerDataTask!: ETaskPromise<unknown>;
@@ -97,9 +118,9 @@ export default class DatasetOwnershipContainer extends Component {
    * Reads the owners for this dataset
    */
   @task(function*(this: DatasetOwnershipContainer): IterableIterator<Promise<IOwnerResponse>> {
-    const { owners = [], fromUpstream, datasetUrn, lastModified, actor } = ((yield readDatasetOwnersByUrn(
+    const { owners = [], fromUpstream, datasetUrn, lastModified, actor }: IOwnerResponse = yield readDatasetOwnersByUrn(
       this.urn
-    )) as unknown) as IOwnerResponse;
+    );
 
     setProperties(this, { owners, fromUpstream, upstreamUrn: datasetUrn, ownershipMetadata: { lastModified, actor } });
   })
@@ -108,26 +129,26 @@ export default class DatasetOwnershipContainer extends Component {
    * Fetches the suggested owners for this dataset
    */
   @task(function*(this: DatasetOwnershipContainer): IterableIterator<Promise<IOwnerResponse>> {
-    let suggestedOwners: DatasetOwnershipContainer['suggestedOwners'] = [];
+    const { owners = [] }: IOwnerResponse = yield readDatasetSuggestedOwnersByUrn(this.urn);
 
-    // Ignore errors associated this requesting suggested owners
-    try {
-      const { owners = [] } = ((yield readDatasetSuggestedOwnersByUrn(this.urn)) as unknown) as IOwnerResponse;
-      suggestedOwners = owners;
-    } finally {
-      setProperties(this, { suggestedOwners });
-    }
+    setProperties(this, { suggestedOwners: owners });
   })
   getSuggestedOwnersTask!: ETaskPromise<IOwnerResponse>;
   /**
    * Reads the owner types available
    */
   @task(function*(this: DatasetOwnershipContainer): IterableIterator<Promise<Array<OwnerType>>> {
-    const ownerTypes = ((yield readDatasetOwnerTypesWithoutConsumer()) as unknown) as Array<OwnerType>;
+    const ownerTypes: Array<OwnerType> = yield readDatasetOwnerTypesWithoutConsumer();
     set(this, 'ownerTypes', ownerTypes);
   })
   getDatasetOwnerTypesTask!: ETaskPromise<Array<OwnerType>>;
-
+  /**
+   * Fetches and caches the list of users available to be added as owner
+   */
+  @task(function*(this: DatasetOwnershipContainer): IterableIterator<Promise<IPartyProps>> {
+    yield this.ldapUsers.fetchUserNames();
+  })
+  getUserEntitiesTask!: ETaskPromise<IPartyProps>;
   /**
    * Handles user notifications when save succeeds or fails
    * @template T the return type for the save request
@@ -155,7 +176,7 @@ export default class DatasetOwnershipContainer extends Component {
    */
   @action
   async saveOwnerChanges(this: DatasetOwnershipContainer, updatedOwners: Array<IOwner>): Promise<{}> {
-    const result = await this.notifyOnSave(updateDatasetOwnersByUrn(get(this, 'urn'), updatedOwners));
+    const result = await this.notifyOnSave(updateDatasetOwnersByUrn(get(this, 'urn'), '', updatedOwners));
     const { notify } = get(this, 'notifications');
 
     try {

@@ -1,11 +1,12 @@
 import Component from '@ember/component';
 import { task } from 'ember-concurrency';
 import { get, set } from '@ember/object';
+import { IDatasetView } from 'wherehows-web/typings/api/datasets/dataset';
+import { readDatasetByUrn } from 'wherehows-web/utils/api/datasets/dataset';
 import { containerDataSource } from '@datahub/utils/api/data-source';
 import { ETaskPromise } from '@datahub/utils/types/concurrency';
-import { readDataset } from '@datahub/data-models/api/dataset/dataset';
 
-@containerDataSource<UpstreamOwners>('getUpstreamPropertiesTask', ['upstreamUrn'])
+@containerDataSource('getUpstreamPropertiesTask', ['upstreamUrn'])
 export default class UpstreamOwners extends Component {
   /**
    * urn for the parent dataset
@@ -16,18 +17,18 @@ export default class UpstreamOwners extends Component {
 
   /**
    * The name of the upstream dataset
-   * @type {IDatasetEntity.nativeName}
+   * @type {IDatasetView.nativeName}
    * @memberof UpstreamOwners
    */
-  nativeName: Com.Linkedin.Dataset.Dataset['name'];
+  nativeName: IDatasetView['nativeName'];
 
   /**
    * Task to get properties for the upstream dataset
    * @memberof UpstreamOwners
    */
-  @task(function*(this: UpstreamOwners): IterableIterator<Promise<Com.Linkedin.Dataset.Dataset>> {
-    const { name } = ((yield readDataset(get(this, 'upstreamUrn'))) as unknown) as Com.Linkedin.Dataset.Dataset;
-    set(this, 'nativeName', name);
+  @task(function*(this: UpstreamOwners): IterableIterator<Promise<IDatasetView>> {
+    const { nativeName }: IDatasetView = yield readDatasetByUrn(get(this, 'upstreamUrn'));
+    set(this, 'nativeName', nativeName);
   })
-  getUpstreamPropertiesTask!: ETaskPromise<Com.Linkedin.Dataset.Dataset>;
+  getUpstreamPropertiesTask!: ETaskPromise<IDatasetView>;
 }

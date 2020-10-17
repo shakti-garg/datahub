@@ -6,10 +6,10 @@ import sinon from 'sinon';
 
 const modalFooterBaseClass = '.notification-confirm-modal__footer';
 
-module('Integration | Component | notifications/dialog/dialog-footer', function(hooks): void {
+module('Integration | Component | notifications/dialog/dialog-footer', function(hooks) {
   setupRenderingTest(hooks);
 
-  test('Footer component rendering', async function(assert): Promise<void> {
+  test('Footer component rendering', async function(assert) {
     await render(hbs`{{notifications/dialog/dialog-footer}}`);
 
     assert.dom(modalFooterBaseClass).exists();
@@ -26,7 +26,7 @@ module('Integration | Component | notifications/dialog/dialog-footer', function(
     assert.dom(modalFooterBaseClass).hasText('Dismiss');
   });
 
-  test('Footer component primary & secondary actions', async function(assert): Promise<void> {
+  test('Footer component primary & secondary actions', async function(assert) {
     const dismissButtonText = 'Dismiss';
     const confirmButtonText = 'OK';
     const onConfirm = sinon.fake();
@@ -58,7 +58,7 @@ module('Integration | Component | notifications/dialog/dialog-footer', function(
     assert.ok(onDismiss.calledOnce, 'Expected onDismiss action to be called when dismiss button clicked');
   });
 
-  test('Footer component tertiary action: Dialog Toggle', async function(assert): Promise<void> {
+  test('Footer component tertiary action: Dialog Toggle', async function(assert) {
     const toggleText = 'Toggle Dialog';
     const toggleRef = '#notifications-confirmation-toggle-input';
     const onDialogToggle = sinon.fake();

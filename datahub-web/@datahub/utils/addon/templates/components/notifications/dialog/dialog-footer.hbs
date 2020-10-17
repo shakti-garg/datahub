@@ -36,7 +36,6 @@
 
   {{#if (not-eq @dismissButtonText false)}}
     <button
-      type="button"
       class="nacho-button--large nacho-button--secondary notification-confirm-modal__footer__dismiss"
       {{action this.onDismiss}}
     >
@@ -45,7 +44,7 @@
   {{/if}}
 
   {{#if (not-eq @confirmButtonText false)}}
-    <button class="nacho-button nacho-button--large-inverse notification-confirm-modal__footer__confirm" {{action this.onConfirm}} type="button">
+    <button class="nacho-button nacho-button--large-inverse notification-confirm-modal__footer__confirm" {{action this.onConfirm}}>
       {{@confirmButtonText}}
     </button>
   {{/if}}

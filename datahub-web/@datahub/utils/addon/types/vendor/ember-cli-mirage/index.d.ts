@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/interface-name-prefix*/
+
 declare module 'ember-data/types/registries/model' {
   export default interface ModelRegistry {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -14,39 +15,30 @@ declare module 'ember-cli-mirage' {
   import EmberObject from '@ember/object';
   import Faker from 'faker';
 
-  export const faker: Faker.FakerStatic & {
-    list: {
-      random: <T>(...args: Array<T>) => T;
-      cycle: <T>(...args: Array<T>) => T;
-    };
-  };
+  export const faker: Faker.FakerStatic;
 
   export type MirageID = number | string;
 
   type MirageRecord<T> = T & { id: MirageID };
 
-  // Query type is specified as a local convenience alias for Partial<T>, not expected as an external argument
-  export interface DatabaseCollection<T = {}, Query = Partial<T>> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  export interface DatabaseCollection<T = any> {
     insert<S extends T | Array<T>>(data: S): S extends T ? MirageRecord<T> : Array<MirageRecord<T>>;
     find<S extends MirageID | Array<MirageID>>(ids: S): S extends MirageID ? MirageRecord<T> : Array<MirageRecord<T>>;
-    findBy(query: Query): MirageRecord<T>;
-    where(query: Query | ((r: MirageRecord<Query>) => boolean)): Array<MirageRecord<T>>;
-    update(attrs: Query): Array<MirageRecord<T>>;
-    update(target: MirageID | Query, attrs: Query): Array<MirageRecord<T>>;
-    remove(target?: MirageID | Query): void;
-    firstOrCreate(query: Query, attributesForCreate?: T): MirageRecord<T>;
+    findBy(query: T): MirageRecord<T>;
+    where(query: T | ((r: MirageRecord<T>) => boolean)): Array<MirageRecord<T>>;
+    update(attrs: T): Array<MirageRecord<T>>;
+    update(target: MirageID | T, attrs: T): Array<MirageRecord<T>>;
+    remove(target?: MirageID | T): void;
+    firstOrCreate(query: T, attributesForCreate?: T): MirageRecord<T>;
     readonly length: number;
   }
 
   export type Database = {
-    createCollection: (collectionName: string) => void;
-    // loadData allows us to load a fixture directly onto the DB, currently being used since we
-    // are having some trouble using loadFixtures() in an addon
-    // https://www.ember-cli-mirage.com/docs/data-layer/fixtures
-    loadData: (data: Partial<Record<keyof IMirageSchemaRegistry, unknown>>) => void;
+    createCollection: (name: string) => void;
   } & {
     [collectionName: string]: DatabaseCollection;
-  } & { [collectionName in keyof IMirageSchemaRegistry]: DatabaseCollection<IMirageSchemaRegistry[collectionName]> };
+  };
 
   export type Model<T> = {
     [P in keyof T]: T[P] extends DS.Model & DS.PromiseObject<infer M>
@@ -123,13 +115,16 @@ declare module 'ember-cli-mirage' {
     constructor(code: number, headers: Record<string, string>, body: unknown);
   }
 
-  export interface Request<T = string> {
+  interface Request<T = unknown> {
     requestBody: T;
     url: string;
-    params: Record<string, string | number>;
-    queryParams: Record<string, string>;
+    params: {
+      [key: string]: string | number;
+    };
+    queryParams: {
+      [key: string]: string;
+    };
     method: string;
-    requestHeaders: Record<string, string>;
   }
 
   export type NormalizedRequestAttrs<T> = {
@@ -148,11 +143,7 @@ declare module 'ember-cli-mirage' {
 
   export interface HandlerContext {
     request: Request;
-    serialize<T = unknown>(modelOrCollection: ModelInstance<T> | ModelClass<T>, serializerName?: string): T;
-    serialize<T = unknown>(
-      modelOrCollection: DatabaseCollection<T> | Array<ModelInstance<T>> | Collection<T>,
-      serializerName?: string
-    ): Array<T>;
+    serialize(modelOrCollection: ModelInstance | Array<ModelInstance> | ModelClass, serializerName?: string): unknown;
     normalizedRequestAttrs<M extends keyof ModelRegistry>(model: M): NormalizedRequestAttrs<ModelRegistry[M]>;
   }
 
@@ -235,6 +226,8 @@ declare module 'ember-cli-mirage' {
 
     loadFixtures(...fixtures: Array<string>): void;
 
+    // limited by https://github.com/Microsoft/TypeScript/issues/1360
+    // passthrough(...paths: Array<string>, verbs?: Array<Verb>): void;
     passthrough(...args: Array<string | unknown>): void;
 
     create<T extends keyof ModelRegistry>(modelName: T, ...traits: Array<string>): ModelInstance<ModelRegistry[T]>;
@@ -256,22 +249,14 @@ declare module 'ember-cli-mirage' {
       ...traits: Array<string>
     ): Array<ModelInstance<ModelRegistry[T]>>;
 
-    serializerOrRegistry: {
-      serializerFor(
-        modelName: keyof IMirageSchemaRegistry
-      ): {
-        serialize: HandlerContext['serialize'];
-      };
-    };
-
     shutdown(): void;
   }
 
-  export type TraitOptions<M extends ModelRegistry[keyof ModelRegistry]> = Partial<M> & {
+  export type TraitOptions<M> = Record<string, unknown> & {
     afterCreate?: (obj: ModelInstance<M>, svr: Server) => void;
   };
 
-  export interface Trait<M extends ModelRegistry[keyof ModelRegistry], O extends TraitOptions<M> = {}> {
+  export interface Trait<O extends TraitOptions<Record<string, unknown>> = {}> {
     extension: O;
     __isTrait__: true;
   }
@@ -284,16 +269,15 @@ declare module 'ember-cli-mirage' {
   // function association(...traits: Array<string>, overrides?: { [key: string]: unknown }): unknown;
   export function association(...args: Array<unknown>): unknown;
 
-  export type FactoryAttrs<T> = { [P in keyof T]: T[P] | ((index: number) => T[P]) } & {
+  export type FactoryAttrs<T> = { [P in keyof T]?: T[P] | ((index: number) => T[P]) } & {
     afterCreate?(newObj: ModelInstance<T>, server: Server): void;
   };
 
-  export class FactoryClass<T> {
-    static extend<T>(attrs: FactoryAttrs<T>): typeof FactoryClass;
-    build(sequence: number): T;
+  export class FactoryClass {
+    extend<T>(attrs: FactoryAttrs<T>): FactoryClass;
   }
 
-  export const Factory: typeof FactoryClass;
+  export const Factory: FactoryClass;
 
   export class JSONAPISerializer extends EmberObject {
     request: Request;

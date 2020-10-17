@@ -1,10 +1,9 @@
 import Component from '@ember/component';
 import { computed } from '@ember/object';
-import { IDataModelEntitySearchResult } from '@datahub/data-models/types/entity/search';
-import { DataModelEntityInstance } from '@datahub/data-models/constants/entity/index';
+import { ISearchResponse } from 'wherehows-web/typings/api/search/search';
 
 /**
- * Search results component for DataHub
+ * Search results component for Data Hub
  */
 export default class SearchResults extends Component {
   /**
@@ -21,7 +20,7 @@ export default class SearchResults extends Component {
   /**
    * Search results data that will be used to render the page
    */
-  result: IDataModelEntitySearchResult<DataModelEntityInstance>;
+  result: ISearchResponse['result'];
 
   /**
    * Returns the last item number of the showing results

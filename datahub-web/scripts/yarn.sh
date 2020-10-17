@@ -1,2 +1,2 @@
 #!/bin/bash
-ligradle whYarn -PyarnArgs="$*"
+./gradlew execYarn -PyarnArgs="$*"

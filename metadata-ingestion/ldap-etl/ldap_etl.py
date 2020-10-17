@@ -17,7 +17,7 @@ ATTRLIST = ['cn', 'title', 'mail', 'sAMAccountName', 'department','manager']
 SEARCHFILTER='SEARCHFILTER'
 
 AVROLOADPATH = '../../metadata-events/mxe-schemas/src/renamed/avro/com/linkedin/mxe/MetadataChangeEvent.avsc'
-KAFKATOPIC = 'MetadataChangeEvent_v4'
+KAFKATOPIC = 'MetadataChangeEvent'
 BOOTSTRAP = 'localhost:9092'
 SCHEMAREGISTRY = 'http://localhost:8081'
 

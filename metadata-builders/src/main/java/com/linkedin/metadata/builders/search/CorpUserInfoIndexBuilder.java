@@ -2,7 +2,6 @@ package com.linkedin.metadata.builders.search;
 
 import com.linkedin.common.urn.CorpuserUrn;
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.data.template.StringArray;
 import com.linkedin.identity.CorpUserEditableInfo;
 import com.linkedin.identity.CorpUserInfo;
 import com.linkedin.metadata.search.CorpUserInfoDocument;
@@ -34,8 +33,7 @@ public class CorpUserInfoIndexBuilder extends BaseIndexBuilder<CorpUserInfoDocum
         .setFullName(fullName)
         .setTitle(title)
         .setActive(corpUserInfo.isActive())
-        .setManagerLdap(managerLdap)
-        .setEmails(new StringArray(corpUserInfo.getEmail()));
+        .setManagerLdap(managerLdap);
   }
 
   @Nonnull

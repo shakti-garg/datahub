@@ -1,16 +1,15 @@
 {{#basic-dropdown as |switcher|}}
   {{#switcher.trigger
-    class="dataset-fabric-switcher__trigger"
     onMouseDown=(action "prevent")
     onMouseEnter=(action "showFabrics")
     onMouseLeave=(action "hideFabrics")
   }}
 
-    <span class="dataset-fabric-switcher__fabric">{{uppercase this.fabric}}</span>
+    <strong class="dataset-fabric-switcher__fabric">{{uppercase fabric}}</strong>
 
-    {{#if this.fabric}}
-      <span class="dataset-fabric-switcher__icon">
-        {{fa-icon (if this.isExpanded "caret-up" "caret-down")}}
+    {{#if fabric}}
+      <span class="dataset-fabric-switcher__fabric__toggle">
+        {{fa-icon (if isExpanded "caret-up" "caret-down")}}
       </span>
     {{/if}}
 
@@ -20,20 +19,22 @@
     onMouseEnter=(action "showFabrics")
     onMouseLeave=(action "hideFabrics")
   }}
-    <ul class="dataset-fabric-switcher__fabric-list">
+    <ul class="dataset-fabric-switcher__fabrics">
       {{#each fabricUrns as |fabricOpt|}}
-        <LinkTo @route="datasets.dataset" @model={{fabricOpt.urn}}>
+        {{#link-to "datasets.dataset" fabricOpt.urn}}
           {{#let
-            (if (eq fabric fabricOpt.fabric) "dataset-fabric-switcher__fabric-list-item--selected")
+            (if (eq fabric fabricOpt.fabric) "dataset-fabric-switcher__fabrics__fabric--selected")
           as |selectedClass|
           }}
             <li
-              class="dataset-fabric-switcher__fabric-list-item {{selectedClass}}"
+              class="dataset-fabric-switcher__fabrics__fabric {{selectedClass}}"
             >
-              {{fabricOpt.fabric}}
+              <strong>
+                {{fabricOpt.fabric}}
+              </strong>
             </li>
           {{/let}}
-        </LinkTo>
+        {{/link-to}}
       {{/each}}
     </ul>
   {{/switcher.content}}

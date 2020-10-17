@@ -3,10 +3,10 @@ import { setupRenderingTest } from 'ember-qunit';
 import { render } from '@ember/test-helpers';
 import hbs from 'htmlbars-inline-precompile';
 
-module('Integration | Component | notifications/dialog/dialog-header', function(hooks): void {
+module('Integration | Component | notifications/dialog/dialog-header', function(hooks) {
   setupRenderingTest(hooks);
 
-  test('it renders', async function(assert): Promise<void> {
+  test('it renders', async function(assert) {
     const header = 'Test Header';
     this.set('header', header);
     await render(hbs`{{notifications/dialog/dialog-header header=this.header}}`);

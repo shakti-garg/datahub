@@ -1,7 +1,9 @@
 import { resolveDynamicRouteName } from '@datahub/utils/routes/routing';
+import { DatasetEntity } from '@datahub/data-models/entity/dataset/dataset-entity';
 import { MaybeRouteInfoWithAttributes } from '@datahub/utils/types/vendor/routerjs';
+import { listOfEntitiesMap } from '@datahub/data-models/entity/utils/entities';
 import Transition from '@ember/routing/-private/transition';
-import { DataModelEntity, DataModelName } from '@datahub/data-models/constants/entity';
+import { DataModelEntity } from '@datahub/data-models/constants/entity';
 
 /**
  * Indexes the route names we care about to functions that resolve the placeholder value
@@ -13,8 +15,8 @@ export const mapOfRouteNamesToResolver: Record<string, ((r: MaybeRouteInfoWithAt
     route.attributes ? `browse.${route.attributes.entity}` : route.name,
   'browse.entity.index': (route: MaybeRouteInfoWithAttributes): string =>
     route.attributes ? `browse.${route.attributes.entity}` : route.name,
-  'entity-type.urn.tab': (route: MaybeRouteInfoWithAttributes): string =>
-    route.attributes ? `${route.attributes.entityClass.displayName}.${route.attributes.tabSelected}` : route.name
+  'datasets.dataset.tab': (route: MaybeRouteInfoWithAttributes): string =>
+    route.attributes ? `${DatasetEntity.displayName}.${route.attributes.currentTab}` : route.name
 };
 
 /**
@@ -22,17 +24,16 @@ export const mapOfRouteNamesToResolver: Record<string, ((r: MaybeRouteInfoWithAt
  * @param {string} routeName the name of the route to check against
  * @returns {boolean}
  */
-const routeNameIsEntityRoute = (routeName: string, entitiesAvailable: Array<DataModelName>): boolean =>
-  entitiesAvailable.some((entityName: DataModelEntity['displayName']): boolean => routeName.startsWith(entityName));
+const routeNameIsEntityRoute = (routeName: string): boolean =>
+  listOfEntitiesMap((e): DataModelEntity['displayName'] => e.displayName).some(
+    (entityName: DataModelEntity['displayName']): boolean => routeName.startsWith(entityName)
+  );
 
 /**
  * Check if the route info instance has a name that is considered an entity route
  * @returns {boolean}
  */
-export const isRouteEntityPageRoute = (
-  routeBeingTransitionedTo: Transition['to' | 'from'],
-  entitiesAvailable: Array<DataModelName>
-): boolean => {
+export const isRouteEntityPageRoute = (routeBeingTransitionedTo: Transition['to' | 'from']): boolean => {
   const routeName = resolveDynamicRouteName(mapOfRouteNamesToResolver, routeBeingTransitionedTo);
-  return Boolean(routeName && routeNameIsEntityRoute(routeName, entitiesAvailable));
+  return Boolean(routeName && routeNameIsEntityRoute(routeName));
 };

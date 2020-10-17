@@ -1,7 +1,10 @@
 {{yield}}
 
 {{#if isShowingAvatars}}
-  <Avatars::AvatarsDetail @header={{header}} @onClose={{action "dismissAvatars"}}>
+  {{#avatars/avatars-detail
+    header=header
+    onClose=(action "dismissAvatars")
+  }}
 
     <ul class="avatar-detail-container">
       {{#each avatars as |avatar|}}
@@ -15,7 +18,11 @@
             >
           </div>
 
-          <Avatars::AvatarMetadata @class="avatar-detail__meta" @avatar={{avatar}} as |aviMeta|>
+          {{#avatars/avatar-metadata
+            class="avatar-detail__meta"
+            avatar=avatar
+          as |aviMeta|
+          }}
             <h4>{{aviMeta.name}}</h4>
 
             {{#if aviMeta.email}}
@@ -23,7 +30,7 @@
                 href="mailto:{{aviMeta.email}}"
                 class="avatar-meta-action"
                 target="_blank"
-                rel="noreferrer noopener"
+                rel="noopener"
               >
                 <strong>{{fa-icon "at"}}</strong> {{aviMeta.email}}
               </a>
@@ -37,11 +44,11 @@
                 {{fa-icon "slack" prefix="fab"}} {{aviMeta.userName}}
               </a>
             {{/if}}
-          </Avatars::AvatarMetadata>
+          {{/avatars/avatar-metadata}}
 
         </li>
       {{/each}}
     </ul>
 
-  </Avatars::AvatarsDetail>
+  {{/avatars/avatars-detail}}
 {{/if}}

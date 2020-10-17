@@ -1,6 +1,5 @@
 import { MetadataAspect } from '@datahub/metadata-types/types/metadata/aspect';
-
-type AspectsOfSnapshot<Snapshot> = Snapshot extends { aspects: Array<infer Aspect> } ? Aspect : {};
+import { Snapshot } from '@datahub/metadata-types/types/metadata/snapshot';
 
 /**
  * An enumeration of MetadataAspect['metadata'] property keys
@@ -9,9 +8,6 @@ type AspectsOfSnapshot<Snapshot> = Snapshot extends { aspects: Array<infer Aspec
  * @type Record<string, keyof MetadataAspect['metadata']>
  */
 export const SnapshotMetadataAspectKey: Record<string, keyof MetadataAspect> = {
-  UmpDatasetProperties: 'com.linkedin.dataset.ump.UMPDatasetProperties',
-  RetentionPolicy: 'com.linkedin.dataset.RetentionPolicy',
-  ComplianceInfo: 'com.linkedin.dataset.ComplianceInfo',
   Ownership: 'com.linkedin.common.Ownership'
 };
 
@@ -22,7 +18,7 @@ export const SnapshotMetadataAspectKey: Record<string, keyof MetadataAspect> = {
  * essentially Object.values(SnapshotMetadataAspectKey) as a type
  * @type {string}
  */
-export type SnapshotMetadataAspectKeyName = typeof SnapshotMetadataAspectKey[string];
+export type SnapshotMetadataAspectKeyName = (typeof SnapshotMetadataAspectKey)[string];
 
 /**
  * Takes a lookup key on the aspects metadata object, and returns an iteratee function that is truthy when it's argument
@@ -30,9 +26,9 @@ export type SnapshotMetadataAspectKeyName = typeof SnapshotMetadataAspectKey[str
  * @param {SnapshotMetadataAspectKeyName} metadataAspectKey the metadata aspect key to find on the aspect's metadata object
  * @returns {((aspect: ArrayElement<Snapshot['aspects']>) => boolean)}
  */
-const getMetadataAspectWithMetadataAspectKey = <Aspect extends {}, AspectKey extends keyof Aspect>(
-  metadataAspectKey: AspectKey
-): ((aspect: Aspect) => boolean) => (aspect: Aspect): boolean => aspect.hasOwnProperty(metadataAspectKey);
+const getMetadataAspectWithMetadataAspectKey = (metadataAspectKey: SnapshotMetadataAspectKeyName) => (
+  aspect: MetadataAspect
+): boolean => aspect.hasOwnProperty(metadataAspectKey);
 
 /**
  * Get the value of the specific metadata keyed by metadataAspectKey from the provided metadata aspect
@@ -41,10 +37,10 @@ const getMetadataAspectWithMetadataAspectKey = <Aspect extends {}, AspectKey ext
  * @param {MetadataAspect} [aspect] optional aspect to read the metadata key from
  * @returns {MetadataAspect['metadata'][SnapshotMetadataAspectKeyName]}
  */
-const getMetadataAspectValue = <Aspect extends {}, AspectKey extends keyof Aspect>(
-  metadataAspectKey: AspectKey,
-  aspect: Aspect
-): Aspect[AspectKey] | undefined => (aspect ? aspect[metadataAspectKey] : undefined);
+const getMetadataAspectValue = (
+  metadataAspectKey: SnapshotMetadataAspectKeyName,
+  aspect: MetadataAspect
+): MetadataAspect[SnapshotMetadataAspectKeyName] => (aspect ? aspect[metadataAspectKey] : undefined);
 
 /**
  * Takes a metadata Snapshot instance e.g. IDatasetSnapshot or IMetricSnapshot,
@@ -52,17 +48,12 @@ const getMetadataAspectValue = <Aspect extends {}, AspectKey extends keyof Aspec
  * aspects.
  * A snapshot's aspects list can contain multiple metadata aspects, but each can only have one of the keys in SnapshotMetadataAspectKeyName
  * @param {Snapshot} snapshot the metadata snapshot to read from
- * @returns {(metadataAspectKey:SnapshotMetadataAspectKeyName) => MetadataAspect[SnapshotMetadataAspectKeyName]}
+ * @returns {(metadataAspectKey:SnapshotMetadataAspectKeyName) => MetadataAspect['metadata'][SnapshotMetadataAspectKeyName]}
  */
-export const getMetadataAspect = <
-  Snapshot extends { aspects: Array<AspectsOfSnapshot<Snapshot>> },
-  AspectKey extends keyof AspectsOfSnapshot<Snapshot>
->(
-  snapshot?: Snapshot
-): ((key: AspectKey) => AspectsOfSnapshot<Snapshot>[AspectKey] | undefined) => (
-  metadataAspectKey: AspectKey
-): AspectsOfSnapshot<Snapshot>[AspectKey] | undefined => {
-  const { aspects = [] } = snapshot || {};
+export const getMetadataAspect = (snapshot: Snapshot = {} as Snapshot) => (
+  metadataAspectKey: SnapshotMetadataAspectKeyName
+) => {
+  const { aspects = [] } = snapshot;
   // Find the aspect with the metadata key that matches the passed in metadataAspectKey
   const [relevantAspect] = aspects.filter(getMetadataAspectWithMetadataAspectKey(metadataAspectKey));
 

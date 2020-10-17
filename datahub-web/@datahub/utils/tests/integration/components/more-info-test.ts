@@ -5,10 +5,10 @@ import hbs from 'htmlbars-inline-precompile';
 
 const elementQuery = '.more-info';
 
-module('Integration | Component | more info', function(hooks): void {
+module('Integration | Component | more info', function(hooks) {
   setupRenderingTest(hooks);
 
-  test('it renders', async function(assert): Promise<void> {
+  test('it renders', async function(assert) {
     await render(hbs`{{more-info}}`);
     const element = document.querySelector(elementQuery) as Element;
 
@@ -25,7 +25,7 @@ module('Integration | Component | more info', function(hooks): void {
     );
   });
 
-  test('MoreInfo', async function(assert): Promise<void> {
+  test('MoreInfo', async function(assert) {
     const externalUrl = 'https://www.linkedin.com';
     const target = '_self';
 

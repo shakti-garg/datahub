@@ -2,7 +2,7 @@ import { module, test } from 'qunit';
 import { debounceAndMemoizeAsyncQuery } from '@datahub/utils/api/autocomplete';
 
 module('Unit | Utility | debounceAndMemoizeAsyncQuery', function() {
-  test('basic usecase', async function(assert): Promise<void> {
+  test('basic usecase', async function(assert) {
     let callTimes = 0;
 
     const apiFn = (): Promise<boolean> => {

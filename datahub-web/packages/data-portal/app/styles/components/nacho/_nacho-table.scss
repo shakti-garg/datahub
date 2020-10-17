@@ -3,17 +3,17 @@
 @include restyle-define(
   table,
   (
-    restyle-var(border-color): get-color(gray1),
+    restyle-var(border-color): set-color(grey, light),
     restyle-var(header-color): get-color(slate1),
     restyle-var(horizontal-padding): 10px,
     restyle-var(font-size): 16px,
-    restyle-var(zebra): get-color(gray0),
+    restyle-var(zebra): tint(set-color(grey, light), 80%),
     border-collapse: collapse,
     border-spacing: 0,
     text-align: left,
     width: 100%,
     table-layout: fixed,
-    background-color: get-color(white),
+    background-color: set-color(white, base),
     '& th': (
       font-size: restyle-var(font-size),
       background-color: restyle-var(header-color),
@@ -29,7 +29,7 @@
       padding: (
         5px restyle-var(horizontal-padding)
       ),
-      border-bottom: 1px solid get-color(gray1),
+      border-bottom: 1px solid set-color(grey, light),
       vertical-align: middle,
       word-wrap: break-word
     ),

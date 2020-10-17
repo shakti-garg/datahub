@@ -54,6 +54,5 @@ You can integrate any data platform to DataHub easily. As long as you have a way
 We have provided example [ETL ingestion](architecture/metadata-ingestion.md) scripts for:
  - Hive
  - Kafka
- - RDBMS (MySQL, Oracle, Postgres, MS SQL etc)
- - Data warehouse (Snowflake, BigQuery etc)
+ - RDBMS (MySQL, Oracle, Postgres etc)
  - LDAP

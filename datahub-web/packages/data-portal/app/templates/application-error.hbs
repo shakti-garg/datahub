@@ -1,11 +1,11 @@
 <div class="wh-login-container">
   <img
     src="/assets/images/landing-logo.png"
-    alt="{{this.appName}}"
+    alt="DataHub Logo"
   >
   <p>Oops an error occurred!</p>
 
   {{if model.message model.message ""}}
 
-  <LinkTo @route="application">Back to safety</LinkTo>
+  {{link-to "Back to safety" "application"}}
 </div>

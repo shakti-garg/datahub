@@ -47,17 +47,17 @@ $user-name-width: 170px;
 
   &__trigger {
     color: get-color(blue6);
-    font-weight: fw(normal, 6);
+    font-weight: 600;
   }
 
   .remove-dataset-author {
-    color: get-color(gray5);
+    color: set-color(grey, mid);
     background-color: transparent;
     float: right;
 
     &:hover {
       background-color: transparent;
-      color: get-color(gray9);
+      color: set-color(grey, dark);
     }
   }
 }

@@ -1,3 +1,4 @@
+import { IOwner } from '@datahub/metadata-types/types/common/owner';
 import { getOwnerUrnParts } from '@datahub/metadata-types/utils/common/ownership/urn';
 
 /**
@@ -5,5 +6,4 @@ import { getOwnerUrnParts } from '@datahub/metadata-types/utils/common/ownership
  * @param {IOwner} { owner } an instance of an IOwner
  * @returns {(string | undefined)}
  */
-export const getOwnerUserName = ({ owner }: Com.Linkedin.Common.Owner): string | undefined =>
-  getOwnerUrnParts(owner).name;
+export const getOwnerUserName = ({ owner }: IOwner): string | undefined => getOwnerUrnParts(owner).name;

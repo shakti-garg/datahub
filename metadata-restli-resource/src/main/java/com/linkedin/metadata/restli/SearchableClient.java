@@ -11,10 +11,8 @@ import javax.annotation.Nullable;
 
 
 /**
- * Interface that all entities that support search and autocomplete should implement in their respective restli MPs.
- *
- * @param <VALUE> the client's value type.
- * @deprecated Use {@link BaseSearchableClient} instead
+ * Interface that all entities that support search and autocomplete should implement in their respective restli MPs
+ * @param <VALUE> the client's value type
  */
 public interface SearchableClient<VALUE extends RecordTemplate> {
 

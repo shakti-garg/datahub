@@ -1,9 +1,6 @@
-import {
-  IEntityRenderProps,
-  IEntityRenderPropsEntityPage,
-  ITabProperties
-} from '@datahub/data-models/types/entity/rendering/entity-render-props';
-import { PersonTab, getPersonTabPropertiesFor } from '@datahub/data-models/constants/entity/person/tabs';
+import { IEntityRenderProps } from '@datahub/data-models/types/entity/rendering/entity-render-props';
+import { Tab, ITabProperties } from '@datahub/data-models/constants/entity/shared/tabs';
+import { getTabPropertiesFor } from '@datahub/data-models/entity/utils';
 
 /**
  * Specific render properties only to the person entity
@@ -24,39 +21,21 @@ export interface IPersonEntitySpecificConfigs {
  * Class properties common across instances
  * Dictates how visual ui components should be rendered
  * Implemented as a getter to ensure that reads are idempotent
- *
- * Making sure entityPage is not marked optional in the types as we know it is defined
  */
-export const getRenderProps = (): IEntityRenderProps & {
-  entityPage: IEntityRenderPropsEntityPage;
-} => {
-  const tabIds = [PersonTab.UserOwnership];
-  const aspects: Array<keyof Com.Linkedin.Metadata.Aspect.CorpUserAspect> = ['com.linkedin.identity.CorpUserInfo'];
+export const getRenderProps = (): IEntityRenderProps => {
+  const tabIds = [Tab.UserOwnership];
 
   return {
-    apiEntityName: 'corpuser',
     entityPage: {
-      apiRouteName: 'corpusers',
+      tabIds,
       route: 'user.profile',
-      tabProperties: getPersonTabPropertiesFor(tabIds),
-      defaultTab: PersonTab.UserOwnership,
+      tabProperties: getTabPropertiesFor(tabIds),
+      defaultTab: Tab.UserOwnership,
       attributePlaceholder: '–'
     },
     // Placeholder information
     search: {
       attributes: [
-        {
-          fieldName: 'reportsTo.entityLink.link',
-          component: {
-            name: 'link/optional-value'
-          },
-          showInResultsPreview: true,
-          showInAutoCompletion: false,
-          showInFacets: false,
-          displayName: 'Manager',
-          desc: '',
-          example: ''
-        },
         {
           fieldName: 'teamTags',
           showInResultsPreview: true,
@@ -74,33 +53,23 @@ export const getRenderProps = (): IEntityRenderProps & {
           displayName: 'Ask me about',
           desc: '',
           example: ''
-        },
-        {
-          showInAutoCompletion: false,
-          fieldName: 'inactive',
-          showInResultsPreview: false,
-          displayName: 'Inactive',
-          showInFacets: false,
-          desc: '',
-          example: '',
-          tagComponent: {
-            name: 'search/custom-search-result-property-component/tag',
-            options: {
-              state: 'alert',
-              text: 'Inactive'
-            }
-          }
         }
       ],
       searchResultEntityFields: {
         description: 'title',
-        pictureUrl: 'profilePictureUrl'
+        pictureUrl: 'editableInfo.pictureLink',
+        name: 'info.fullName'
       },
       showFacets: false,
       placeholder: 'Search for People...',
-      autocompleteNameField: 'fullName',
-      isEnabled: true,
-      defaultAspects: aspects
+      apiName: 'corpuser',
+      autocompleteNameField: 'fullName'
+    },
+    // Placeholder information
+    browse: {
+      showCount: false,
+      showHierarchySearch: false,
+      entityRoute: 'user.profile'
     }
   };
 };

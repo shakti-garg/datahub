@@ -72,9 +72,6 @@ public class DatasetUtil {
     if (dataset.hasLastModified()) {
       view.setModifiedTime(dataset.getLastModified().getTime());
     }
-    if (dataset.hasProperties()) {
-      view.setCustomProperties(dataset.getProperties());
-    }
     return view;
   }
 

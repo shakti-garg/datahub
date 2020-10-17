@@ -6,12 +6,12 @@ replicaCount: 1
 
 image:
   repository: linkedin/datahub-gms
-  pullPolicy: Always
+  pullPolicy: IfNotPresent
   tag: latest
 
 imagePullSecrets: []
 nameOverride: ""
-fullnameOverride: ""
+fullnameOverride: "datahub-gms-deployment"
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -35,6 +35,7 @@ securityContext: {}
 
 service:
   type: LoadBalancer #ClusterIP
+  port: 8080
 
 ingress:
   enabled: false
@@ -48,23 +49,6 @@ ingress:
   #  - secretName: chart-example-tls
   #    hosts:
   #      - chart-example.local
-
-# Extra environment variables
-# This will be appended to the current 'env:' key. You can use any of the kubernetes env
-# syntax here
-extraEnvs: []
-  # - name: MY_ENVIRONMENT_VAR
-  #   value: the_value_goes_here
-
-extraVolumes: []
-  # - name: extras
-  #   emptyDir: {}
-
-extraVolumeMounts: []
-  # - name: extras
-  #   mountPath: /usr/share/extras
-  #   readOnly: true
-
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
@@ -101,23 +85,21 @@ global:
     host: "neo4j:7474"
     uri: "bolt://neo4j"
     username: "neo4j"
-    password:
-      secretRef: "neo4j-secrets"
-      secretKey: "neo4j-password"
+    password: "datahub"
 
   sql:
     datasource:
-      host: "mysql:3306"
+      host: "mysql"
       url: "jdbc:mysql://mysql:3306/datahub?verifyServerCertificate=false&useSSL=true"
       driver: "com.mysql.jdbc.Driver"
       username: "datahub"
-      password:
-        secretRef: "mysql-secrets"
-        secretKey: "mysql-password"
+      password: "datahub"
 
   datahub:
     gms:
+      host: "datahub-gms-service"
       port: "8080"
+      secret: "YouKnowNothing"
     appVersion: "1.0"
 
   hostAliases:

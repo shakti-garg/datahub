@@ -3,10 +3,10 @@ import { setupRenderingTest } from 'ember-qunit';
 import { render } from '@ember/test-helpers';
 import hbs from 'htmlbars-inline-precompile';
 
-module('Integration | Helper | get-flat', function(hooks): void {
+module('Integration | Helper | get-flat', function(hooks) {
   setupRenderingTest(hooks);
 
-  test('it return the expected value', async function(assert): Promise<void> {
+  test('it return the expected value', async function(assert) {
     this.set('obj', {
       something: true,
       'something.with.dots': true

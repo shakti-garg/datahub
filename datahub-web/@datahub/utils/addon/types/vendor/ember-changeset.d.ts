@@ -1,7 +1,6 @@
 // Ember changeset currently ships with incorrect types, hence the narrower, more accurate annotations below
 // https://github.com/poteto/ember-changeset/issues/350
 declare module 'ember-changeset' {
-  import { UnwrapComputedPropertyGetter } from '@ember/object/-private/types';
   import EmberObject from '@ember/object';
   import Observable from '@ember/object/observable';
 
@@ -41,20 +40,13 @@ declare module 'ember-changeset' {
     options?: Config
   ): Readonly<typeof EmberObject> & (new (properties?: object) => unknown) & (new (...args: Array<unknown>) => unknown);
 
-  export default class Changeset<T> {
+  export default class Changeset {
     rollback: Function;
     validate(key?: string): Promise<ValidationResult | null>;
     cast: Function;
-    data: T;
-    set<K extends keyof T, C extends keyof Changeset<T>>(
-      key: K | C,
-      value: T[K] | Changeset<T>[C]
-    ): K extends keyof T ? T[K] : Changeset<T>[C];
-    get<C extends keyof Changeset<T>>(key: C): UnwrapComputedPropertyGetter<Changeset<T>[C]>;
-    get<K extends keyof T>(key: K): UnwrapComputedPropertyGetter<T[K]>;
+    set: Observable['set'];
     changes: Array<{ key: string; value: string }>;
     save: <T>(...args: Array<unknown>) => Promise<T>;
-    isDirty: boolean;
     /**
      * Changeset factory
      *
@@ -62,7 +54,7 @@ declare module 'ember-changeset' {
      * @constructor
      */
     constructor(
-      obj: T,
+      obj: object,
       validateFn?: ValidatorFunc,
       validationMap?: {
         [s: string]: ValidatorFunc | Array<ValidatorFunc>;

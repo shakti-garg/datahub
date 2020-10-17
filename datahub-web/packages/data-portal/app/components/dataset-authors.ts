@@ -3,8 +3,10 @@ import { set } from '@ember/object';
 import { action, computed } from '@ember/object';
 import { filter, map, alias } from '@ember/object/computed';
 import { inject as service } from '@ember/service';
+
+import UserLookup from 'wherehows-web/services/user-lookup';
 import CurrentUser from '@datahub/shared/services/current-user';
-import { IOwner } from 'datahub-web/typings/api/datasets/owners';
+import { IOwner } from 'wherehows-web/typings/api/datasets/owners';
 import {
   ownerAlreadyExists,
   confirmOwner,
@@ -13,17 +15,18 @@ import {
   validConfirmedOwners,
   isRequiredMinOwnersNotConfirmed,
   isConfirmedOwner
-} from 'datahub-web/constants/datasets/owner';
-import { OwnerSource, OwnerType } from 'datahub-web/utils/api/datasets/owners';
+} from 'wherehows-web/constants/datasets/owner';
+import { OwnerSource, OwnerType } from 'wherehows-web/utils/api/datasets/owners';
 import Notifications from '@datahub/utils/services/notifications';
-import { noop } from 'lodash';
-import { makeAvatar } from 'datahub-web/constants/avatars/avatars';
-import { OwnerWithAvatarRecord } from 'datahub-web/typings/app/datasets/owners';
+import { noop } from 'wherehows-web/utils/helpers/functions';
+import { IAppConfig } from '@datahub/shared/types/configurator/configurator';
+import { makeAvatar } from 'wherehows-web/constants/avatars/avatars';
+import { OwnerWithAvatarRecord } from 'wherehows-web/typings/app/datasets/owners';
 import { NotificationEvent } from '@datahub/utils/constants/notifications';
 import { PersonEntity } from '@datahub/data-models/entity/person/person-entity';
 import { task } from 'ember-concurrency';
 import { ETaskPromise } from '@datahub/utils/types/concurrency';
-import { IAppConfig } from '@datahub/shared/types/configurator/configurator';
+import DataModelsService from '@datahub/data-models/services/data-models';
 
 type Comparator = -1 | 0 | 1;
 
@@ -40,7 +43,7 @@ export default class DatasetAuthors extends Component {
    * @return {Promise<Array<IOwner>>}
    * @memberof DatasetAuthors
    */
-  save: (owners: Array<IOwner>) => Promise<Array<IOwner>> = () => Promise.resolve([]);
+  save: (owners: Array<IOwner>) => Promise<Array<IOwner>> = noop;
 
   /**
    * The list of owners
@@ -80,6 +83,20 @@ export default class DatasetAuthors extends Component {
   notifications: Notifications;
 
   /**
+   * User look up service
+   * @type {ComputedProperty<UserLookup>}
+   * @memberof DatasetAuthors
+   */
+  @service('user-lookup')
+  userLookup: UserLookup;
+
+  /**
+   * Injected service for our data models getter to access the PersonEntity class
+   */
+  @service('data-models')
+  dataModels!: DataModelsService;
+
+  /**
    * If there are no changes to the ownership tab, we want to keep the save button disabled. Rather than
    * try to compare two sets of prev vs new data, we just have a flag here that short stops the validation
    * function.
@@ -92,6 +109,14 @@ export default class DatasetAuthors extends Component {
    * @memberof DatasetAuthors
    */
   changedState: Comparator = -1;
+
+  /**
+   * Reference to the userNamesResolver function to asynchronously match userNames
+   * @type {UserLookup.userNamesResolver}
+   * @memberof DatasetAuthors
+   */
+  @alias('userLookup.userNamesResolver')
+  userNamesResolver: UserLookup['userNamesResolver'];
 
   /**
    * A list of valid owner type strings returned from the remote api endpoint
@@ -169,14 +194,15 @@ export default class DatasetAuthors extends Component {
    * @returns {OwnerWithAvatarRecord}
    */
   datasetAuthorsOwnersAugmentedWithAvatars = (owner: IOwner): OwnerWithAvatarRecord => {
-    const { avatarProperties } = this;
+    const { avatarProperties, dataModels } = this;
+    const PersonEntityClass = dataModels.getModel('people') as typeof PersonEntity;
 
     return {
       owner,
       avatar: avatarProperties
-        ? makeAvatar(avatarProperties)({ userName: owner.userName })
+        ? makeAvatar(avatarProperties)(owner)
         : { imageUrl: '', imageUrlFallback: '/assets/images/default_avatar.png' },
-      profile: PersonEntity.profileLinkFromUsername(owner.userName)
+      profile: PersonEntityClass.urnFromUsername(owner.userName)
     };
   };
 
@@ -237,15 +263,6 @@ export default class DatasetAuthors extends Component {
     yield this.save(this.owners);
   }).drop())
   saveOwners!: ETaskPromise<Array<IOwner>>;
-
-  /**
-   * Action triggered when user clicks on add an owner
-   */
-  @action
-  onClickAddOwner(): void {
-    this.set('isAddingOwner', true);
-  }
-
   /**
    * Adds the component owner record to the list of owners with default props
    * @returns {Array<IOwner> | void}
@@ -261,9 +278,9 @@ export default class DatasetAuthors extends Component {
       return void notify({ content: 'Owner has already been added to "confirmed" list', type: NotificationEvent.info });
     }
 
-    const { username = '' } = this.currentUser?.entity || {};
+    const { userName = '' } = this.currentUser ? this.currentUser.currentUser || {} : {};
     const updatedOwners = [...owners, newOwner];
-    confirmOwner(newOwner, username);
+    confirmOwner(newOwner, userName);
 
     return owners.setObjects(updatedOwners);
   }
@@ -287,7 +304,7 @@ export default class DatasetAuthors extends Component {
   @action
   confirmSuggestedOwner(this: DatasetAuthors, owner: IOwner): Array<IOwner> | void {
     const suggestedOwner = { ...owner, source: OwnerSource.Ui };
-    return this.actions.addOwner.call(this, suggestedOwner);
+    return this.addOwner.call(this, suggestedOwner);
   }
 
   /**
