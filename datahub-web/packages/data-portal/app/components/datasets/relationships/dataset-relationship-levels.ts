@@ -1,9 +1,13 @@
 import Component from '@ember/component';
 import { classNames } from '@ember-decorators/component';
 import { computed } from '@ember/object';
-import GraphDb, { INode, IEdge } from 'datahub-web/utils/graph-db';
-import { IDatasetLineage } from '@datahub/metadata-types/types/entity/dataset/lineage';
-import { IPropertiesPanelArgs } from '@datahub/shared/components/entity/properties-panel';
+import GraphDb, { INode, IEdge } from 'wherehows-web/utils/graph-db';
+import { IDatasetLineage } from 'wherehows-web/typings/api/datasets/relationships';
+import { DatasetEntity } from '@datahub/data-models/entity/dataset/dataset-entity';
+import {
+  ISearchEntityRenderProps,
+  IEntityRenderCommonPropsSearch
+} from '@datahub/data-models/types/search/search-entity-render-prop';
 
 /**
  * Interface that adds more fields to a standard node
@@ -26,6 +30,23 @@ interface ILevel {
   level: number;
   label: string;
 }
+
+/**
+ * default values for new properties that we can render on the view
+ */
+const defaultField: Partial<ISearchEntityRenderProps> & {
+  showInAutoCompletion: boolean;
+  showInResultsPreview: boolean;
+  showInFacets: boolean;
+  desc: string;
+  example: string;
+} = {
+  showInAutoCompletion: false,
+  showInResultsPreview: true,
+  showInFacets: false,
+  desc: '',
+  example: ''
+};
 
 /**
  * returns the title of a level given the level number
@@ -74,32 +95,32 @@ export default class DatasetRelationshipLevels extends Component {
    * Also we are going to add a couple of more properties that belongs to the node
    * and lineage relation.
    */
-  propertiesPanelOptions: IPropertiesPanelArgs['options'] = {
-    standalone: false,
-    columnNumber: 2,
-    properties: [
+  searchConfig: IEntityRenderCommonPropsSearch = {
+    attributes: [
+      ...DatasetEntity.renderProps.search.attributes.map(
+        (field): ISearchEntityRenderProps => ({
+          ...field,
+          fieldName: `payload.dataset.${field.fieldName}`
+        })
+      ),
       {
-        name: 'payload.dataset.fabric',
-        displayName: 'Data Origin'
-      },
-      {
-        name: 'payload.dataset.platform',
-        displayName: 'Platform'
-      },
-      {
-        name: 'payload.type',
+        ...defaultField,
+        fieldName: 'payload.type',
         displayName: 'Type'
       },
       {
-        name: 'payload.actor',
+        ...defaultField,
+        fieldName: 'payload.actor',
         displayName: 'Actor'
       },
       {
-        name: 'nChildren',
+        ...defaultField,
+        fieldName: 'nChildren',
         displayName: '# Children'
       },
       {
-        name: 'nParents',
+        ...defaultField,
+        fieldName: 'nParents',
         displayName: '# Parents'
       }
     ]

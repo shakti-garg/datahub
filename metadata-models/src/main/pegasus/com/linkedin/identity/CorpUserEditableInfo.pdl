@@ -5,7 +5,6 @@ import com.linkedin.common.Url
 /**
  * Linkedin corp user information that can be edited from UI
  */
-@Aspect.EntityUrns = [ "com.linkedin.common.CorpuserUrn" ]
 record CorpUserEditableInfo {
 
   /**

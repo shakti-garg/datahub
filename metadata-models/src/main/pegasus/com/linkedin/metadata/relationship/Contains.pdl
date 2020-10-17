@@ -3,9 +3,6 @@ namespace com.linkedin.metadata.relationship
 /**
  * A generic model for the Has-A relationship
  */
-@pairings = [ {
-  "destination" : "com.linkedin.common.urn.ChartUrn",
-  "source" : "com.linkedin.common.urn.DashboardUrn"
-} ]
+@pairings = [ ]
 record Contains includes BaseRelationship {
 }

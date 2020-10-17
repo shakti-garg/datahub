@@ -1,6 +1,5 @@
 'use strict';
 
 module.exports = {
-  name: require('./package').name,
-  isDevelopingAddon: () => true
+  name: require('./package').name
 };

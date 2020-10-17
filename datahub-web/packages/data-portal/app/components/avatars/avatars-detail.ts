@@ -1,7 +1,7 @@
 import Component from '@ember/component';
 import { get } from '@ember/object';
 import { action } from '@ember/object';
-import { Keyboard } from 'datahub-web/constants/keyboard';
+import { Keyboard } from 'wherehows-web/constants/keyboard';
 
 export default class AvatarsDetail extends Component {
   containerClassNames = ['avatars-detail-modal'];
@@ -16,7 +16,7 @@ export default class AvatarsDetail extends Component {
    * @param {KeyboardEvent} { key, which }
    */
   @action
-  onKeyUp({ key, which }: KeyboardEvent): void {
+  onKeyUp({ key, which }: KeyboardEvent) {
     // if escape key, close modal
     if (which === Keyboard.Escape || key === Keyboard[27]) {
       get(this, 'onClose')();

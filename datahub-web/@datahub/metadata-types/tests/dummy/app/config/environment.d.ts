@@ -6,15 +6,11 @@
  * since different ember addons can materialize new entries.
  */
 declare const config: {
-  environment: 'development' | 'test' | 'production';
+  environment: any;
   modulePrefix: string;
   podModulePrefix: string;
   locationType: string;
   rootURL: string;
-  APP: {
-    // Alternate value for notifications service toast delay, used in test runs
-    notificationsTimeout?: number;
-  };
 };
 
 export default config;

@@ -4,7 +4,6 @@ import { run } from '@ember/runloop';
 // @ts-ignore: Ignore import of compiled template
 import template from '../templates/components/big-list';
 import { layout, tagName } from '@ember-decorators/component';
-import { noop } from 'lodash';
 
 type OnFinishedReturnType<T> = void | Promise<Array<T>>;
 type OnFinishedType = <T>(currentIndex: number) => OnFinishedReturnType<T>;
@@ -34,13 +33,13 @@ export default class BigList<T> extends Component {
   // internal list to be used in the template as the actual list that is rendered
   renderedList: Array<T> = [];
   // the number of items that are going to be copied from list to renderedList per loop
-  chunkSize = 1;
+  chunkSize: number = 1;
   // the last index of list that was copied into renderedList
-  currentIndex = 0;
+  currentIndex: number = 0;
   // an ID to refer to the animation frame
   animationFrameId?: number;
   // a closure action that will be passed in when the parent component wants to know when the list has been rendered
-  onFinished: OnFinishedType = noop;
+  onFinished: OnFinishedType = () => {};
 
   /**
    * Hook to start render items when the list is in dom

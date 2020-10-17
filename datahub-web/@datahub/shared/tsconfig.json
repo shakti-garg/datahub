@@ -4,27 +4,15 @@
     "baseUrl": ".",
     "rootDir": "../../",
     "paths": {
-      "dummy/mirage/*": ["tests/dummy/mirage/*", "../../@datahub/data-models/tests/dummy/mirage/*"],
-      "dummy/tests/*": ["tests/*", "../../@datahub/data-models/tests/*"],
-      "dummy/*": [
-        "tests/dummy/app/*",
-        "app/*",
-        "../../@datahub/data-models/tests/dummy/app/*",
-        "../../@datahub/data-models/tests/app/*"
-      ],
+      "dummy/tests/*": ["tests/*"],
+      "dummy/*": ["tests/dummy/app/*", "app/*"],
       "@datahub/shared": ["addon"],
       "@datahub/shared/*": ["addon/*"],
       "@datahub/shared/test-support": ["addon-test-support"],
       "@datahub/shared/test-support/*": ["addon-test-support/*"],
-      "@datahub/data-models": ["../../@datahub/data-models/addon"],
-      "@datahub/data-models/*": ["../../@datahub/data-models/addon/*"],
       "@datahub/utils": ["../../@datahub/utils/addon"],
       "@datahub/utils/*": ["../../@datahub/utils/addon/*"],
-      "@datahub/metadata-types": ["../../@datahub/metadata-types/addon"],
-      "@datahub/metadata-types/*": ["../../@datahub/metadata-types/addon/*"],
-      "@nacho-ui/core": ["../../@nacho-ui/nacho-core/addon"],
-      "@nacho-ui/core/*": ["../../@nacho-ui/nacho-core/addon/*"],
-      "*": ["types/*"]
+      "*": ["types/*"],
     }
   },
   "include": [
@@ -34,13 +22,7 @@
     "types/**/*",
     "test-support/**/*",
     "addon-test-support/**/*",
-    "../../@datahub/data-models/addon/**/*",
-    "../../@datahub/data-models/types/**/*",
-    "../../@datahub/data-models/tests/**/*",
     "../../@datahub/utils/addon/**/*",
-    "../../@datahub/utils/types/**/*",
-    "../../@datahub/metadata-types/addon/**/*",
-    "../../@datahub/metadata-types/types/**/*",
-    "../../@nacho-ui/nacho-core/**/*"
+    "../../@datahub/utils/types/**/*"
   ]
 }

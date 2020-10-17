@@ -1,24 +1,28 @@
-import Component from '@ember/component';
-import { get, set, setProperties, action } from '@ember/object';
+import { get, set, setProperties } from '@ember/object';
 import { typeOf } from '@ember/utils';
-import { suggestionLimit } from 'datahub-web/constants/typeahead';
-import { IPowerSelectAPI } from '@nacho-ui/search/types/nacho-search';
-import { noop } from 'lodash';
-import { fetchFacetValue } from 'datahub-web/utils/parsers/helpers';
-import { PersonEntity } from '@datahub/data-models/entity/person/person-entity';
-import { classNames } from '@ember-decorators/component';
-import { IOwner } from 'datahub-web/typings/api/datasets/owners';
-import { inject as service } from '@ember/service';
-import DataModelsService from '@datahub/data-models/services/data-models';
-import { defaultOwnerProps } from 'datahub-web/constants/datasets/owner';
+import { action } from '@ember/object';
+import UserLookup from 'wherehows-web/components/user-lookup';
+import { Keyboard } from 'wherehows-web/constants/keyboard';
+import { suggestionLimit } from 'wherehows-web/constants/typeahead';
+import { IPowerSelectAPI } from 'wherehows-web/typings/modules/power-select';
+import { noop } from 'wherehows-web/utils/helpers/functions';
 
-@classNames('user-lookup')
-export default class PowerUserLookup extends Component {
-  /**
-   * Injection of the application's data modeling service
-   */
-  @service('data-models')
-  dataModels!: DataModelsService;
+/**
+ * The stepMap is used for keyboard event translation where up arrows mean we are decreasing our position in
+ * the list and down arrows mean we are increasing our position in the list
+ * @type {Object}
+ */
+const stepMap: { [key: number]: number } = {
+  [Keyboard['ArrowUp']]: -1,
+  [Keyboard['ArrowDown']]: 1
+};
+
+export default class PowerUserLookup extends UserLookup {
+  didInsertElement() {
+    super.didInsertElement();
+    this.classNames = (this.classNames || []).concat('pwr-user-lookup');
+    this.classNameBindings = (this.classNameBindings || []).concat('showPlaceholder:pwr-user-lookup--focused');
+  }
 
   /**
    * The currently selected person from the dropdown by the user
@@ -49,7 +53,7 @@ export default class PowerUserLookup extends Component {
    * When the user focuses in on our component, we want to remove the placeholder text and the "+" icon in
    * the typeahead box.
    */
-  focusIn(): void {
+  focusIn() {
     set(this, 'showPlaceholder', false);
   }
 
@@ -57,7 +61,7 @@ export default class PowerUserLookup extends Component {
    * This hook is used to ensure overall component behavior is consistent with power-select behavior. Since
    * the power select typeahead is cleared when input loses focus, we use this to clear our autosuggest
    */
-  focusOut(): void {
+  focusOut() {
     setProperties(this, {
       suggestedText: '',
       showPlaceholder: !get(this, 'selectedEntity')
@@ -70,7 +74,7 @@ export default class PowerUserLookup extends Component {
    * was triggered by user input
    * @param params - api object provided by ember-power-select component into this closure method
    */
-  highlight(params: IPowerSelectAPI<string>): string | Array<string> {
+  highlight(params: IPowerSelectAPI<string>) {
     const { results, highlighted, selected, options } = params;
     const selectionList = options || results;
     // If we have a list of options, return the first item in that list to highlight. Otherwise, fallback to
@@ -83,12 +87,63 @@ export default class PowerUserLookup extends Component {
    * @param keyword - keyword entered by user passed from the power-select component
    */
   @action
-  async onSearch(keyword: string): Promise<void> {
-    const newSuggestions = (await fetchFacetValue('ldap', keyword, PersonEntity)).slice(0, suggestionLimit);
-    setProperties(this, {
-      suggestionOptions: newSuggestions,
-      suggestedText: newSuggestions[0]
+  onSearch(keyword: string) {
+    // Note: Property defined on base user-lookup component
+    const userNamesResolver = get(this, 'userNamesResolver');
+    // The async results retrieved from the resolver is what's used to populate our refreshed suggestions
+    userNamesResolver(keyword, noop, asyncResults => {
+      if (typeOf(asyncResults) === 'array') {
+        const newSuggestions = asyncResults.slice(0, suggestionLimit);
+        setProperties(this, {
+          suggestionOptions: newSuggestions,
+          suggestedText: newSuggestions[0]
+        });
+      }
     });
+  }
+
+  /**
+   * Action that gets called from user keystroke event. The side effects of this action take place before
+   * the event is propogated to and handled by the power select component itself. This calculates whether
+   * the user has entered an arrow up or arrow down key and if so, changes the autocomplete text to the
+   * next value that will be highlighted based on the list position
+   * @param params - api object provided by the ember power select component
+   * @param keyboardEvent - event object created by the keypress
+   */
+  @action
+  onKeyPress(params: IPowerSelectAPI<string>, keyboardEvent: KeyboardEvent) {
+    const keyCode = keyboardEvent.keyCode;
+    // Helps determine the "next index" to check in the list of suggestions to attempt to highlight
+    const step = stepMap[keyCode] || 0;
+    const { highlighted, results, options } = params;
+
+    // Figure out where highlighted is in the options or results
+    if (highlighted && step) {
+      const stepList = options || results;
+      const currentHighlightedIdx = stepList.indexOf(highlighted);
+
+      let nextIdx = currentHighlightedIdx + step;
+      // Make sure the attempted "next" is still within the limits of the list
+      if (nextIdx < 0 || nextIdx >= stepList.length) {
+        nextIdx -= step;
+      }
+      // This modifies the secondary "autocomplete" to match with our next highlighted suggestion
+      set(this, 'suggestedText', stepList[nextIdx]);
+    }
+    // Prevents the tab key from skipping to next element and also autocompletes our text
+    if (keyCode === Keyboard['Tab']) {
+      keyboardEvent.preventDefault();
+      keyboardEvent.stopPropagation();
+      set(this, 'selectedEntity', get(this, 'suggestedText'));
+      return false;
+    }
+    // Treats using the enter key the same as if the user had triggered a selection event
+    if (keyCode === Keyboard['Enter']) {
+      this.actions.onChangeSelection.call(this, get(this, 'selectedEntity'));
+      return false;
+    }
+
+    return true;
   }
 
   /**
@@ -97,31 +152,14 @@ export default class PowerUserLookup extends Component {
    * @param selection - selected option in the dropdown list
    */
   @action
-  async onChangeSelection(selection: string): Promise<void> {
+  onChangeSelection(selection: string) {
     if (typeOf(selection) === 'string') {
       setProperties(this, {
         selectedEntity: '',
         suggestedText: ''
       });
+      // Note: findUser is on the base UserLookup class
+      this.actions.findUser.call(this, selection);
     }
-
-    const { name } = (await this.dataModels.createInstance(
-      PersonEntity.displayName,
-      PersonEntity.urnFromUsername(selection)
-    )) as PersonEntity;
-    const owner: IOwner = {
-      ...defaultOwnerProps,
-      userName: selection,
-      name
-    };
-
-    this.didFindUser(owner);
   }
-
-  /**
-   * External action triggered when a user is selected from type ahead
-   * @param {IOwner} user the owner instance found matching the sought user
-   * @memberof UserLookup
-   */
-  didFindUser: (user: IOwner) => void = noop;
 }

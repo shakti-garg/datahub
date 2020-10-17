@@ -4,7 +4,7 @@ import template from '../templates/components/notifications';
 import { layout, attribute } from '@ember-decorators/component';
 import { NotificationType } from '@datahub/utils/constants/notifications';
 import NotificationsService from '@datahub/utils/services/notifications';
-import { inject as service } from '@ember/service';
+
 /**
  * Defines the class for the parent notifications component which host the rendering of other notification components within itself e.g. toasts, dialogs
  * @export
@@ -26,6 +26,5 @@ export default class Notifications extends Component {
   /**
    * Injected reference to the applications notifications service
    */
-  @service('notifications')
-  service!: NotificationsService;
+  service?: NotificationsService;
 }

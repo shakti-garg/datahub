@@ -1,7 +1,7 @@
 import IvyTabsTablistComponent from 'ivy-tabs/components/ivy-tabs-tablist';
-import { noop } from 'lodash';
+import { noop } from 'wherehows-web/utils/helpers/functions';
 import { scheduleOnce } from '@ember/runloop';
-import { Keyboard } from 'datahub-web/constants/keyboard';
+import { Keyboard } from 'wherehows-web/constants/keyboard';
 
 export default IvyTabsTablistComponent.extend({
   /**

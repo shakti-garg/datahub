@@ -1,14 +1,14 @@
+// NOTE: Named as .js to solve issue: no such file or directory, ...tests/dummy/app/router.js'
+// when running ember g route <NAME> --dummy command
 import EmberRouter from '@ember/routing/router';
 import config from './config/environment';
 
-export default class Router extends EmberRouter {
-  location = config.locationType;
-  rootURL = config.rootURL;
-}
+const Router = EmberRouter.extend({
+  location: config.locationType,
+  rootURL: config.rootURL
+});
 
 Router.map(function() {
-  this.route('data-access');
-
   this.route('user', function() {
     this.route('ump-flow');
     this.route(
@@ -18,9 +18,10 @@ Router.map(function() {
       },
       function() {
         this.route('own');
-        this.route('access');
       }
     );
     this.route('profile', { path: '/:user_id' });
   });
 });
+
+export default Router;

@@ -13,8 +13,8 @@
     {{#if (has-block)}}
       {{yield}}
     {{else}}
-      {{#with @result.entityLink.link as |link|}}
-        <Tracking::TrackableLinkTo
+      {{#with @meta.entityLink.link as |link|}}
+        <Analytics::TrackableLinkTo
           @route={{link.route}}
           @models={{link.model}}
           @queryParams={{link.queryParams}}
@@ -24,7 +24,7 @@
           class="search-result__title-link"
         >
           {{split-text this.name 65}}
-        </Tracking::TrackableLinkTo>
+        </Analytics::TrackableLinkTo>
       {{else}}
         <span class="search-result__title-span">
           {{split-text this.name 65}}
@@ -54,7 +54,6 @@
     </div>
   {{/if}}
 
-  {{!-- META-11899: Reuse Properties Panel for this --}}
   <div class="search-result__fields">
     {{#each @searchConfig.attributes as |field|}}
       <Search::SearchField @field={{field}} @entity={{@result}} />

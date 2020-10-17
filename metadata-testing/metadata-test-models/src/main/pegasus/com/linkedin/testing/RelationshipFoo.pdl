@@ -12,22 +12,17 @@ import com.linkedin.common.Urn
 record RelationshipFoo {
 
   /**
-   * Urn of the source entity
+   * For unit tests
    */
   source: Urn
 
   /**
-   * Urn of the destination entity
+   * For unit tests
    */
   destination: Urn
 
   /**
-   * Type attribute of the relationship
+   * Attribute for the relationship, for unit tests
    */
   type: optional string
-
-  /**
-   * Integer field as a relationship attribute
-   */
-  intField: optional int
 }

@@ -7,7 +7,7 @@ class PretendComponent {
   didUpdateAttrs(): void {}
 }
 
-@containerDataSource<TestForDecoratorsDataSourceComponent>('getContainerDataTask', ['urn'])
+@containerDataSource('getContainerDataTask', ['urn'])
 export default class TestForDecoratorsDataSourceComponent extends PretendComponent {
   assert?: Assert;
 

@@ -1,5 +1,5 @@
-import { ApiResponseStatus } from '@datahub/utils/api/shared';
-import { apiErrorStatusMessage } from '@datahub/utils/api/error';
+import { apiErrorStatusMessage } from 'wherehows-web/constants/errors/errors';
+import { ApiResponseStatus } from 'wherehows-web/utils/api';
 
 /**
  * Extends the built-in Error class with attributes related to treating non 200 OK responses
@@ -15,7 +15,7 @@ class ApiError extends Error {
    */
   readonly timestamp = new Date();
 
-  constructor(readonly status: ApiResponseStatus, message: string, ...args: Array<string | undefined>) {
+  constructor(readonly status: ApiResponseStatus, message: string, ...args: Array<any>) {
     super(...[message, ...args]);
     // Fixes downlevel compiler limitation with correct prototype chain adjustment
     // i.e. ensuring this is also `instanceof` subclass

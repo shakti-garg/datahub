@@ -1,22 +1,52 @@
 import Component from '@ember/component';
-import { set, setProperties, computed, action } from '@ember/object';
-import { IPowerSelectAPI } from '@nacho-ui/search/types/nacho-search';
-import { ISuggestion, ISuggestionGroup } from 'datahub-web/utils/parsers/autocomplete/types';
+import { set, setProperties } from '@ember/object';
+import { IPowerSelectAPI } from 'wherehows-web/typings/modules/power-select';
+import { ISuggestion, ISuggestionGroup } from 'wherehows-web/utils/parsers/autocomplete/types';
 import { inject as service } from '@ember/service';
-import HotKeys from 'datahub-web/services/hot-keys';
-import { Keyboard } from 'datahub-web/constants/keyboard';
+import HotKeys from 'wherehows-web/services/hot-keys';
+import { Keyboard } from 'wherehows-web/constants/keyboard';
 import { later, cancel } from '@ember/runloop';
+import { computed } from '@ember/object';
 import { INachoDropdownOption } from '@nacho-ui/dropdown/types/nacho-dropdown';
 import { task } from 'ember-concurrency';
 import { EmberRunTimer } from '@ember/runloop/types';
-import { cancelInflightTask } from 'datahub-web/utils/search/typeahead';
+import { cancelInflightTask } from 'wherehows-web/utils/search/typeahead';
 import { DataModelEntity, DataModelName } from '@datahub/data-models/constants/entity';
 import { DatasetEntity } from '@datahub/data-models/entity/dataset/dataset-entity';
-import titleize from '@nacho-ui/core/utils/strings/titleize';
+import { capitalize } from '@ember/string';
 import { stringListOfEntities } from '@datahub/data-models/entity/utils/entities';
+import { unGuardedEntities } from 'wherehows-web/utils/entity/flag-guard';
+import { getConfig } from 'wherehows-web/services/configurator';
 import { ETaskPromise } from '@datahub/utils/types/concurrency';
-import DataModelsService from '@datahub/data-models/services/data-models';
-import { isSearchable } from '@datahub/shared/utils/search/entities';
+
+const initProps = (): {
+  entities: Array<INachoDropdownOption<string>>;
+} => {
+  /**
+   * List of entities converted into nacho dropdown format
+   */
+  const nachoDropdownOptions: Array<INachoDropdownOption<string>> = unGuardedEntities(getConfig).map(
+    (dataModel): INachoDropdownOption<DataModelName> => ({
+      label: capitalize(dataModel.displayName),
+      value: dataModel.displayName
+    })
+  );
+
+  /**
+   * List of entities and empty selection item when there is no selection available
+   */
+  const nachoDropdownOptionsWithSelect: Array<INachoDropdownOption<string>> = [
+    {
+      label: 'Select entity type',
+      value: ''
+    },
+    ...nachoDropdownOptions
+  ];
+
+  return {
+    entities: nachoDropdownOptionsWithSelect
+  };
+};
 /**
  * Presentation component that renders a search box
  */
@@ -24,9 +54,6 @@ import { isSearchable } from '@datahub/shared/utils/search/entities';
 export default class SearchBox extends Component {
   @service
   hotKeys: HotKeys;
-
-  @service('data-models')
-  dataModels!: DataModelsService;
 
   /**
    * HBS Expected Parameter
@@ -49,35 +76,9 @@ export default class SearchBox extends Component {
   onTypeahead!: ETaskPromise<Array<ISuggestionGroup>, string, string>;
 
   /**
-   * External function to handle a change in the current selected entity
+   * List of entities to render inside the dropdown
    */
-  onEntityChange?: (entity?: DataModelName) => void;
-
-  /**
-   * List of entities to render inside the dropdown.
-   * NOTE: The list should be generated when the class is instantiated. Otherwise
-   * we will have leaks in tests
-   */
-  get entities(): Array<INachoDropdownOption<string>> {
-    const { dataModels } = this;
-    // Note: If we're using multi-entity search then the default is "all entity types" whereas
-    // if we are not then the user has to select an entity type and the UI will force them to
-    // choose
-    const defaultLabel = 'All Entities';
-
-    return [
-      {
-        label: defaultLabel,
-        value: ''
-      },
-      ...dataModels.guards.unGuardedEntities.filter(isSearchable).map(
-        (dataModel): INachoDropdownOption<DataModelName> => ({
-          label: titleize(dataModel.displayName),
-          value: dataModel.displayName
-        })
-      )
-    ];
-  }
+  entities: Array<INachoDropdownOption<string>>;
 
   /**
    * Selected entity in the entity dropdown
@@ -111,46 +112,50 @@ export default class SearchBox extends Component {
   /**
    * Flag to show or hide entity tooltip
    */
-  showSelectEntityTooltip = false;
+  showSelectEntityTooltip: boolean = false;
 
   /**
    * Timer for the tooltip
    */
   tooltipTimeout: EmberRunTimer;
 
-  /**
-   * Entity definition for current entity
-   */
-  @computed('selectedEntity')
-  get dataModelEntity(): DataModelEntity | undefined {
-    const { selectedEntity, dataModels } = this;
-    if (selectedEntity && dataModels) {
-      return dataModels.getModel(selectedEntity);
-    }
-    return;
+  init(): void {
+    setProperties(this, initProps());
+    super.init();
   }
 
   /**
-   * When no entity is selected and we are not using multi-entity search, then search should not
-   * be allowed
+   * Adding a specific trigger class name to apply different styles
+   * when ump is enabled (so we can change rounded borders)
+   */
+  @computed()
+  get triggerClassName(): string {
+    return '';
+  }
+
+  /**
+   * When no entity is selected then, search should not be allowed
    */
   @computed('selectedEntity')
   get searchDisabled(): boolean {
-    return false;
+    const { selectedEntity } = this;
+    return !selectedEntity;
   }
 
   /**
    * Placeholder for input
    */
-  @computed('searchDisabled', 'dataModelEntity')
+  @computed('searchDisabled', 'selectedEntity')
   get placeholder(): string {
-    const { searchDisabled, dataModelEntity } = this;
+    const { searchDisabled, selectedEntity } = this;
 
-    const defaultMessage = `Select ${stringListOfEntities(
-      this.dataModels.guards.unGuardedEntities.filter(isSearchable)
-    )}`;
-
-    return !searchDisabled && dataModelEntity ? dataModelEntity.renderProps.search.placeholder : defaultMessage;
+    if (searchDisabled) {
+      return `Select ${stringListOfEntities(unGuardedEntities(getConfig))}`;
+    }
+    if (selectedEntity) {
+      return DataModelEntity[selectedEntity].renderProps.search.placeholder;
+    }
+    return '';
   }
 
   didReceiveAttrs(): void {
@@ -168,12 +173,8 @@ export default class SearchBox extends Component {
    * @returns {IterableIterator<TaskInstance<Array<ISuggestionGroup>>>}
    */
   @task(function*(this: SearchBox): IterableIterator<Promise<Array<ISuggestionGroup>>> {
-    const { selectedEntity } = this;
-    const entityForSuggestion = selectedEntity;
-
-    const initialSuggestions: Array<ISuggestionGroup> | undefined =
-      entityForSuggestion && (yield this.onTypeahead.perform('', entityForSuggestion));
-
+    const { selectedEntity = DatasetEntity.displayName } = this;
+    const initialSuggestions: Array<ISuggestionGroup> = yield this.onTypeahead.perform('', selectedEntity);
     set(this, 'initialSuggestions', initialSuggestions || []);
   })
   setInitialSuggestionsTask!: ETaskPromise<Array<ISuggestionGroup>>;
@@ -184,13 +185,8 @@ export default class SearchBox extends Component {
    * @param {string} query user query input string
    * @returns {IterableIterator<TaskInstance<Array<ISuggestionGroup>>>}
    */
-  @(task(function*(this: SearchBox, query = ''): IterableIterator<Promise<Array<ISuggestionGroup>>> {
-    const { selectedEntity } = this;
-    const entityForTypeahead = selectedEntity;
-
-    if (entityForTypeahead) {
-      return yield this.onTypeahead.perform(query as string, entityForTypeahead);
-    }
+  @(task(function*(this: SearchBox, query: string = ''): IterableIterator<Promise<Array<ISuggestionGroup>>> {
+    return yield this.onTypeahead.perform(query, this.selectedEntity || DatasetEntity.displayName);
   }).restartable())
   onTypeaheadTask!: ETaskPromise<Array<ISuggestionGroup>>;
 
@@ -211,7 +207,6 @@ export default class SearchBox extends Component {
    * Sets focus to the search input element, helpful when we need to trigger focus using code
    * instead of the user clicking on the search bar.
    */
-  @action
   setFocus(): void {
     const searchInput = this.element.querySelector<HTMLInputElement>('input');
     searchInput && searchInput.focus();
@@ -221,7 +216,6 @@ export default class SearchBox extends Component {
    * When the input transitioned from focus->blur
    * Reset suggestions, save text and cancel previous search.
    */
-  @action
   @cancelInflightTask('onTypeaheadTask')
   onBlur(): void {
     setProperties(this, {
@@ -234,7 +228,6 @@ export default class SearchBox extends Component {
    * When the input transitioned from blur->focus
    * Restore inputText value from text, open suggestions, and search latest term
    */
-  @action
   onFocus(pws: IPowerSelectAPI<string>): void {
     setProperties(this, {
       inputText: this.text,
@@ -257,7 +250,6 @@ export default class SearchBox extends Component {
    * When user types text we save it
    * @param text user typed text
    */
-  @action
   onInput(text: string): void {
     set(this, 'inputText', text);
   }
@@ -265,7 +257,6 @@ export default class SearchBox extends Component {
   /**
    * When user selects an item from the list
    */
-  @action
   onChange(selected: ISuggestion): void {
     if (selected) {
       const text = selected.text;
@@ -295,7 +286,6 @@ export default class SearchBox extends Component {
    * When user intents to perform a search
    */
   @cancelInflightTask('onTypeaheadTask')
-  @action
   onSubmit(): void {
     if (this.inputText && this.inputText.trim().length > 0) {
       // this will prevent search text from jitter,
@@ -305,8 +295,9 @@ export default class SearchBox extends Component {
       // => car // press enter
       // => somethingelse //after onSubmit
       // => car // route sets car
+
       set(this, 'text', this.inputText);
-      this.onSearch(this.inputText, this.selectedEntity || DatasetEntity.displayName);
+      this.onSearch(this.inputText, this.selectedEntity);
       if (this.powerSelectApi) {
         this.powerSelectApi.actions.close(new Event('onSubmit'));
       }
@@ -319,7 +310,6 @@ export default class SearchBox extends Component {
    * @param _
    * @param event
    */
-  @action
   onClose(_: IPowerSelectAPI<string>, event: Event): false | void {
     if (!event) {
       return false;
@@ -329,24 +319,20 @@ export default class SearchBox extends Component {
   /**
    * Action when the user changes the entity selected in the dropdown
    */
-  @action
   onSelectedEntityChange(entity?: DataModelName): void {
+    const selectedEntity = entity && Object.keys(DataModelEntity).includes(entity) ? entity : undefined;
     setProperties(this, {
-      selectedEntity: entity,
+      selectedEntity,
       showSelectEntityTooltip: false
     });
 
     this.setInitialSuggestionsTask.perform();
-    if (this.onEntityChange) {
-      this.onEntityChange(entity);
-    }
   }
 
   /**
    * Generic ember mouseDown event to catch the click on the search input when input is disabled.
    * We are using mousedown since click is swallowed when input is disabled
    */
-  @action
   mouseDown(e: Event): void {
     const input = this.element.querySelector('input');
     const target: HTMLElement = e.target as HTMLElement;

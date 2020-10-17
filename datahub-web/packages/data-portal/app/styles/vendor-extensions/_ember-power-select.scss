@@ -1,4 +1,4 @@
-$color: get-color(gray1);
+$color: set-color(grey, light);
 
 $ember-power-select-default-border-radius: 2px;
 $ember-power-select-line-height: 2.1;
@@ -15,7 +15,7 @@ $ember-power-select-border-color: shade($color, 20%);
 .ember-power-select-trigger {
   &::before {
     content: '\e259';
-    font-weight: fw(normal, 6);
+    font-weight: normal;
     pointer-events: none;
     font-family: $glyphicons-stack;
     position: absolute;

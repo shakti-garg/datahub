@@ -3,15 +3,11 @@ import {
   AutocompleteRuleNames,
   ISuggestionBuilder,
   IState,
-  INodeFacetProcessor,
   ISuggestion
-} from 'datahub-web/utils/parsers/autocomplete/types';
-import { dataToString } from 'datahub-web/utils/parsers/autocomplete/utils';
-import { platform } from 'datahub-web/utils/parsers/autocomplete/processors/facets/platform';
-import { fabric } from 'datahub-web/utils/parsers/autocomplete/processors/facets/fabric';
-import { pii, tier, frequency, highPriority } from 'datahub-web/utils/parsers/autocomplete/processors/facets/metrics';
-import { fetchFacetValue } from 'datahub-web/utils/parsers/helpers';
-import { ISearchEntityRenderProps } from '@datahub/data-models/types/search/search-entity-render-prop';
+} from 'wherehows-web/utils/parsers/autocomplete/types';
+import { dataToString } from 'wherehows-web/utils/parsers/autocomplete/utils';
+import { ISearchEntityRenderProps } from '@datahub/data-models/types/entity/rendering/search-entity-render-prop';
+import { fetchFacetValue } from 'wherehows-web/utils/parsers/helpers';
 
 /**
  * Helper fn to get the facet name from a FacetValue grammar rule
@@ -48,19 +44,6 @@ const getFacetValueFromStateRule = (state: IState): string => {
   }
 
   return '';
-};
-
-/**
- * Current facets processors available
- * @type {INodeFacetProcessor}
- */
-export const facetNameProcessor: INodeFacetProcessor = {
-  platform,
-  dataorigin: fabric,
-  highPriority,
-  pii,
-  tier,
-  frequency
 };
 
 export const facetsProcessor: INodeProcessor = {
@@ -101,14 +84,6 @@ export const facetsProcessor: INodeProcessor = {
   ): Promise<ISuggestionBuilder> => {
     const facetName = getFacetNameFromStateRule(ruleState);
     const facetValue = getFacetValueFromStateRule(ruleState);
-
-    // First lets check if we have a special processing for that property
-    const processor = facetNameProcessor[facetName];
-
-    if (processor) {
-      return await processor(builder, facetValue);
-    }
-
     const suggestions = await fetchFacetValue(facetName, facetValue, builder.entity);
 
     return {

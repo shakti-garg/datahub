@@ -1,6 +1,5 @@
 package com.linkedin.metadata.builders.graph;
 
-import com.linkedin.common.Status;
 import com.linkedin.common.urn.DatasetUrn;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.metadata.aspect.DatasetAspect;
@@ -11,7 +10,7 @@ import java.util.Collections;
 import java.util.List;
 import org.testng.annotations.Test;
 
-import static com.linkedin.metadata.testing.Urns.*;
+import static com.linkedin.metadata.utils.TestUtils.*;
 import static org.testng.Assert.*;
 
 
@@ -35,7 +34,7 @@ public class DatasetGraphBuilderTest {
   public void testBuildRemovedEntity() {
     DatasetUrn urn = makeDatasetUrn("foobar");
     DatasetAspect aspect = new DatasetAspect();
-    aspect.setStatus(new Status().setRemoved(true));
+    aspect.setStatus(makeStatus(true));
     DatasetSnapshot snapshot =
         new DatasetSnapshot().setUrn(urn).setAspects(new DatasetAspectArray(Collections.singleton(aspect)));
     DatasetEntity expected = new DatasetEntity().setUrn(urn)

@@ -1,7 +1,8 @@
 import EmberObject, { set, get } from '@ember/object';
 import { computed } from '@ember/object';
+import { groupBy } from '@datahub/utils/array/group-by';
 import { setProperties } from '@ember/object';
-import { keyBy, groupBy } from 'lodash';
+import { keyBy } from 'lodash';
 
 /**
  * INode interface. It represents a node in a graph, you can
@@ -49,7 +50,7 @@ export default class GraphDb<T> extends EmberObject {
   // unique keys that helps to identity a node when only its payload is provided
   uniqueKeys: Array<string> = [];
   // internal id generator
-  idGenerator = 1;
+  idGenerator: number = 1;
 
   /**
    * Index to access edges by from
@@ -175,7 +176,7 @@ export default class GraphDb<T> extends EmberObject {
    * @param up
    * @param stopAtLevel you can stop at a certain level by the default the boundary of upstream/downstream
    */
-  getHierarchyNodes(node: INode<T>, up = true, stopAtLevel = 0): Array<INode<T>> {
+  getHierarchyNodes(node: INode<T>, up: boolean = true, stopAtLevel: number = 0): Array<INode<T>> {
     let exploredNodes: Array<INode<T>> = [node];
     let currentNodes: Array<INode<T>> = [node];
     while (currentNodes.length !== 0) {

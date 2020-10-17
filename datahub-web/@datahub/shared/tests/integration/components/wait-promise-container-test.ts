@@ -2,13 +2,12 @@ import { module, test } from 'qunit';
 import { setupRenderingTest } from 'ember-qunit';
 import { render, settled } from '@ember/test-helpers';
 import hbs from 'htmlbars-inline-precompile';
-import { noop } from 'lodash';
 
 module('Integration | Component | wait-promise-container', function(hooks): void {
   setupRenderingTest(hooks);
 
   test('it renders', async function(assert): Promise<void> {
-    let testResolve: (value?: unknown) => void = noop;
+    let testResolve: (value?: unknown) => void = (): void => {};
     this.set(
       'promise',
       new Promise((resolve): void => {

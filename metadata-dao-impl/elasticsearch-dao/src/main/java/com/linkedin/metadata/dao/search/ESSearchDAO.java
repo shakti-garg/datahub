@@ -11,10 +11,10 @@ import com.linkedin.metadata.dao.SearchResult;
 import com.linkedin.metadata.dao.exception.ESQueryException;
 import com.linkedin.metadata.dao.utils.ESUtils;
 import com.linkedin.metadata.dao.utils.QueryUtils;
+import com.linkedin.metadata.dao.utils.SearchUtils;
 import com.linkedin.metadata.query.AggregationMetadata;
 import com.linkedin.metadata.query.AggregationMetadataArray;
 import com.linkedin.metadata.query.AutoCompleteResult;
-import com.linkedin.metadata.query.Criterion;
 import com.linkedin.metadata.query.Filter;
 import com.linkedin.metadata.query.SearchResultMetadata;
 import com.linkedin.metadata.query.SortCriterion;
@@ -24,7 +24,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
@@ -59,14 +58,14 @@ public class ESSearchDAO<DOCUMENT extends RecordTemplate> extends BaseSearchDAO<
   private static final String URN_FIELD = "urn";
 
   private RestHighLevelClient _client;
-  private BaseSearchConfig<DOCUMENT> _config;
+  private BaseSearchConfig _config;
   private BaseESAutoCompleteQuery _autoCompleteQueryForLowCardFields;
   private BaseESAutoCompleteQuery _autoCompleteQueryForHighCardFields;
 
   // TODO: Currently takes elastic search client, in future, can take other clients such as galene
   // TODO: take params and settings needed to create the client
   public ESSearchDAO(@Nonnull RestHighLevelClient esClient, @Nonnull Class<DOCUMENT> documentClass,
-      @Nonnull BaseSearchConfig<DOCUMENT> config) {
+      @Nonnull BaseSearchConfig config) {
     super(documentClass);
     _client = esClient;
     _config = config;
@@ -83,7 +82,7 @@ public class ESSearchDAO<DOCUMENT extends RecordTemplate> extends BaseSearchDAO<
   }
 
   /**
-   * Constructs the base query string given input.
+   * Constructs the base query string given input
    *
    * @param input the search input text
    * @return built query
@@ -131,8 +130,7 @@ public class ESSearchDAO<DOCUMENT extends RecordTemplate> extends BaseSearchDAO<
   }
 
   /**
-   * Returns a {@link SearchRequest} given filters to be applied to search query and sort criterion to be applied to
-   * search results.
+   * Returns a {@link SearchRequest} given filters to be applied to search query and sort criterion to be applied to search results
    *
    * @param filters {@link Filter} list of conditions with fields and values
    * @param sortCriterion {@link SortCriterion} to be applied to the search results
@@ -163,29 +161,30 @@ public class ESSearchDAO<DOCUMENT extends RecordTemplate> extends BaseSearchDAO<
   }
 
   /**
-   * Constructs the search query based on the query request.
-   *
-   * <p>TODO: This part will be replaced by searchTemplateAPI when the elastic is upgraded to 6.4 or later
+   * Constructs the search query based on the query request
    *
    * @param input the search input text
-   * @param filter the search filter
+   * @param requestParams the request map with fields and values
    * @param from index to start the search from
    * @param size the number of search hits to return
    * @return a valid search request
+   * TODO: This part will be replaced by searchTemplateAPI when the elastic is upgraded to 6.4 or later
    */
   @Nonnull
-  public SearchRequest constructSearchQuery(@Nonnull String input, @Nullable Filter filter,
+  public SearchRequest constructSearchQuery(@Nonnull String input, @Nullable Filter requestParams,
       @Nullable SortCriterion sortCriterion, int from, int size) {
 
     SearchRequest searchRequest = new SearchRequest(_config.getIndexName());
     SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
 
+    Map<String, String> requestMap = SearchUtils.getRequestMap(requestParams);
+
     searchSourceBuilder.from(from);
     searchSourceBuilder.size(size);
 
     searchSourceBuilder.query(buildQueryString(input));
-    searchSourceBuilder.postFilter(ESUtils.buildFilterQuery(filter));
-    buildAggregations(searchSourceBuilder, filter);
+    searchSourceBuilder.postFilter(ESUtils.buildFilterQuery(requestMap));
+    buildAggregations(searchSourceBuilder, requestMap);
     ESUtils.buildSortOrder(searchSourceBuilder, sortCriterion);
 
     searchRequest.source(searchSourceBuilder);
@@ -194,33 +193,35 @@ public class ESSearchDAO<DOCUMENT extends RecordTemplate> extends BaseSearchDAO<
   }
 
   /**
-   * Constructs the aggregations and sub-aggregations by adding other facets' filters if they are set in request.
+   * Constructs the aggregations and sub-aggregations by adding other facets' filters if they are set in request
    *
-   * <p>Retrieves dynamic aggregation bucket values when the selections change on the fly
+   * Retrieves dynamic aggregation bucket values when the selections change on the fly
    *
    * @param searchSourceBuilder the builder to build search source for search request
-   * @param filter the search filters
+   * @param requestMap the search request map with fields and its values
    */
   private void buildAggregations(@Nonnull SearchSourceBuilder searchSourceBuilder,
-      @Nullable Filter filter) {
+      @Nonnull Map<String, String> requestMap) {
     Set<String> facetFields = _config.getFacetFields();
     for (String facet : facetFields) {
       AggregationBuilder aggBuilder = AggregationBuilders.terms(facet).field(facet).size(DEFAULT_TERM_BUCKETS_SIZE_100);
-      Optional.ofNullable(filter).map(Filter::getCriteria).ifPresent(criteria -> {
-        for (Criterion criterion : criteria) {
-          if (!facetFields.contains(criterion.getField()) || criterion.getField().equals(facet)) {
-            continue;
-          }
-          QueryBuilder filterQueryBuilder = ESUtils.getQueryBuilderFromCriterionForSearch(criterion);
-          aggBuilder.subAggregation(AggregationBuilders.filter(criterion.getField(), filterQueryBuilder));
+
+      for (Map.Entry<String, String> entry : requestMap.entrySet()) {
+        if (!facetFields.contains(entry.getKey()) || entry.getKey().equals(facet) || entry.getValue() == null) {
+          continue;
         }
-      });
+        BoolQueryBuilder oFilters = new BoolQueryBuilder();
+        Arrays.stream(entry.getValue().split(","))
+            .forEach(elem -> oFilters.should(QueryBuilders.matchQuery(entry.getKey(), elem)));
+
+        aggBuilder.subAggregation(AggregationBuilders.filter(entry.getKey(), oFilters));
+      }
       searchSourceBuilder.aggregation(aggBuilder);
     }
   }
 
   /**
-   * Extracts a list of documents from the raw search response.
+   * Extracts a list of documents from the raw search response
    *
    * @param searchResponse the raw search response from search engine
    * @param from offset from the first result you want to fetch
@@ -246,7 +247,7 @@ public class ESSearchDAO<DOCUMENT extends RecordTemplate> extends BaseSearchDAO<
   }
 
   /**
-   * Gets list of documents from search hits.
+   * Gets list of documents from search hits
    *
    * @param searchResponse the raw search response from search engine
    * @return List of documents
@@ -258,7 +259,7 @@ public class ESSearchDAO<DOCUMENT extends RecordTemplate> extends BaseSearchDAO<
   }
 
   /**
-   * Builds data map for documents.
+   * Builds data map for documents
    *
    * @param objectMap an object map represents one raw search hit
    * @return a data map
@@ -307,7 +308,7 @@ public class ESSearchDAO<DOCUMENT extends RecordTemplate> extends BaseSearchDAO<
   }
 
   /**
-   * Extracts SearchResultMetadata section.
+   * Extracts SearchResultMetadata section
    *
    * @param searchResponse the raw {@link SearchResponse} as obtained from the search engine
    * @return {@link SearchResultMetadata} with aggregation and list of urns obtained from {@link SearchResponse}
@@ -346,7 +347,7 @@ public class ESSearchDAO<DOCUMENT extends RecordTemplate> extends BaseSearchDAO<
   }
 
   /**
-   * Extracts term aggregations give a parsed term.
+   * Extracts term aggregations give a parsed term
    *
    * @param terms an abstract parse term, input can be either ParsedStringTerms ParsedLongTerms
    * @return a map with aggregation key and corresponding doc counts
@@ -371,7 +372,7 @@ public class ESSearchDAO<DOCUMENT extends RecordTemplate> extends BaseSearchDAO<
   }
 
   /**
-   * Extracts sub aggregations from one term bucket.
+   * Extracts sub aggregations from one term bucket
    *
    * @param bucket a term bucket
    * @return a parsed filter if exist
@@ -397,4 +398,5 @@ public class ESSearchDAO<DOCUMENT extends RecordTemplate> extends BaseSearchDAO<
       throw new RuntimeException("Invalid urn in search document " + e);
     }
   }
+
 }

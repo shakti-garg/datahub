@@ -2,7 +2,7 @@ import Component from '@ember/component';
 import { INachoDropdownOption } from '@nacho-ui/dropdown/types/nacho-dropdown';
 import { tagName, classNames, className } from '@ember-decorators/component';
 import { equal } from '@ember/object/computed';
-import { noop } from 'lodash';
+import { noop } from 'wherehows-web/utils/helpers/functions';
 
 @tagName('li')
 @classNames('nacho-drop-down__options__option')

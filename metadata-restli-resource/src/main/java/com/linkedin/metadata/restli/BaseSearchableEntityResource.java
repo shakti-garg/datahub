@@ -33,9 +33,9 @@ import static com.linkedin.metadata.restli.RestliConstants.*;
 
 
 /**
- * A base class for the entity rest.li resource that supports CRUD + search methods.
+ * A base class for the entity rest.li resource that supports CRUD + search methods
  *
- * <p>See http://go/gma for more details
+ * See http://go/gma for more details
  *
  * @param <KEY> the resource's key type
  * @param <VALUE> the resource's value type
@@ -62,11 +62,6 @@ public abstract class BaseSearchableEntityResource<
     super(snapshotClass, aspectUnionClass);
   }
 
-  public BaseSearchableEntityResource(@Nonnull Class<SNAPSHOT> snapshotClass,
-      @Nonnull Class<ASPECT_UNION> aspectUnionClass, @Nonnull Class<URN> urnClass) {
-    super(snapshotClass, aspectUnionClass, urnClass);
-  }
-
   /**
    * Returns a document-specific {@link BaseSearchDAO}.
    */
@@ -86,7 +81,7 @@ public abstract class BaseSearchableEntityResource<
   @RestMethod.GetAll
   @Nonnull
   public Task<List<VALUE>> getAll(@Nonnull PagingContext pagingContext,
-      @QueryParam(PARAM_ASPECTS) @Optional @Nullable String[] aspectNames,
+      @QueryParam(PARAM_ASPECTS) @Optional("[]") @Nonnull String[] aspectNames,
       @QueryParam(PARAM_FILTER) @Optional @Nullable Filter filter,
       @QueryParam(PARAM_SORT) @Optional @Nullable SortCriterion sortCriterion) {
 
@@ -102,7 +97,7 @@ public abstract class BaseSearchableEntityResource<
   @Finder(FINDER_SEARCH)
   @Nonnull
   public Task<CollectionResult<VALUE, SearchResultMetadata>> search(@QueryParam(PARAM_INPUT) @Nonnull String input,
-      @QueryParam(PARAM_ASPECTS) @Optional @Nullable String[] aspectNames,
+      @QueryParam(PARAM_ASPECTS) @Optional("[]") @Nonnull String[] aspectNames,
       @QueryParam(PARAM_FILTER) @Optional @Nullable Filter filter,
       @QueryParam(PARAM_SORT) @Optional @Nullable SortCriterion sortCriterion,
       @PagingContextParam @Nonnull PagingContext pagingContext) {
@@ -124,7 +119,7 @@ public abstract class BaseSearchableEntityResource<
 
   @Nonnull
   private CollectionResult<VALUE, SearchResultMetadata> getSearchQueryCollectionResult(@Nonnull SearchResult<DOCUMENT> searchResult,
-      @Nullable String[] aspectNames) {
+      @Nonnull String[] aspectNames) {
 
     final List<URN> matchedUrns = searchResult.getDocumentList()
         .stream()

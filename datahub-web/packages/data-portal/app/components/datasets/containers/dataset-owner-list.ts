@@ -3,36 +3,34 @@ import { set } from '@ember/object';
 import { classNames } from '@ember-decorators/component';
 import { computed, action } from '@ember/object';
 import { task } from 'ember-concurrency';
-import { readDatasetOwnersByUrn } from 'datahub-web/utils/api/datasets/owners';
-import { arrayMap, arrayPipe } from '@datahub/utils/array/index';
-import { IAvatar } from 'datahub-web/typings/app/avatars';
-import { IOwner, IOwnerResponse } from 'datahub-web/typings/api/datasets/owners';
-import { makeAvatar } from 'datahub-web/constants/avatars/avatars';
-import { confirmedOwners, avatarWithDropDownOption, avatarWithProfileLink } from 'datahub-web/constants/datasets/owner';
+import { readDatasetOwnersByUrn } from 'wherehows-web/utils/api/datasets/owners';
+import { arrayMap, arrayPipe } from 'wherehows-web/utils/array';
+import { IAvatar } from 'wherehows-web/typings/app/avatars';
+import { IOwner, IOwnerResponse } from 'wherehows-web/typings/api/datasets/owners';
+import { makeAvatar } from 'wherehows-web/constants/avatars/avatars';
+import {
+  confirmedOwners,
+  avatarWithDropDownOption,
+  avatarWithProfileLink
+} from 'wherehows-web/constants/datasets/owner';
 import { containerDataSource } from '@datahub/utils/api/data-source';
-import { buildMailToUrl } from '@datahub/utils/helpers/email';
+import { IAppConfig } from '@datahub/shared/types/configurator/configurator';
+import { buildMailToUrl } from 'wherehows-web/utils/helpers/email';
 import { INachoDropdownOption } from '@nacho-ui/dropdown/types/nacho-dropdown';
 
 import { decodeUrn } from '@datahub/utils/validators/urn';
 import { isLiUrn } from '@datahub/data-models/entity/dataset/utils/urn';
 import { ETaskPromise } from '@datahub/utils/types/concurrency';
-import { IAppConfig } from '@datahub/shared/types/configurator/configurator';
-import { DatasetEntity } from '@datahub/data-models/entity/dataset/dataset-entity';
 
 @classNames('dataset-owner-list')
-@containerDataSource<DatasetOwnerListContainer>('getOwnersTask', ['urn', 'entity'])
+@containerDataSource('getOwnersTask', ['urn'])
 export default class DatasetOwnerListContainer extends Component {
   /**
-   * Reference to the passed in entity for this component to provide context
-   */
-  entity?: DatasetEntity;
-
-  /**
    * Urn for the related dataset
+   * @type {string}
+   * @memberof DatasetOwnerListContainer
    */
-  get urn(): string {
-    return this.entity?.urn || '';
-  }
+  urn!: string;
 
   /**
    * The owners for the dataset
@@ -86,11 +84,10 @@ export default class DatasetOwnerListContainer extends Component {
    * Reads the owners for this dataset
    */
   @(task(function*(this: DatasetOwnerListContainer): IterableIterator<Promise<IOwnerResponse>> {
-    const { urn, entity } = this;
-    const ownersUrn = urn || entity?.urn || '';
+    const { urn } = this;
 
-    if (isLiUrn(decodeUrn(ownersUrn))) {
-      const { owners = [] } = ((yield readDatasetOwnersByUrn(ownersUrn)) as unknown) as IOwnerResponse;
+    if (isLiUrn(decodeUrn(urn))) {
+      const { owners = [] }: IOwnerResponse = yield readDatasetOwnersByUrn(urn);
 
       set(this, 'owners', confirmedOwners(owners));
     }

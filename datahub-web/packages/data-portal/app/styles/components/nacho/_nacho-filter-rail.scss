@@ -6,10 +6,10 @@ $pad-width: 16px;
   filter-card,
   (
     restyle-var(horizontal-padding): $pad-width,
-    background-color: get-color(white),
+    background-color: set-color(white, base),
     padding: restyle-var(horizontal-padding),
     position: relative,
-    border-bottom: 1px solid get-color(gray1)
+    border-bottom: 1px solid set-color(grey, light)
   )
 );
 
@@ -18,7 +18,7 @@ $pad-width: 16px;
   (
     list-style-type: none,
     padding: 0,
-    border: 1px solid get-color(gray1)
+    border: 1px solid set-color(grey, light)
   )
 );
 
@@ -31,11 +31,11 @@ $pad-width: 16px;
   }
 
   &__header {
-    color: get-color(slate9);
-    background-color: get-color(white);
+    color: set-color(blue, oxford);
+    background-color: set-color(white, base);
     padding: $pad-width;
     font-size: 17px;
-    font-weight: fw(normal, 7);
+    font-weight: 600;
   }
 }
 
@@ -72,12 +72,12 @@ $pad-width: 16px;
 
     &::before {
       content: '+';
-      color: get-color(gray5);
+      color: set-color(grey, mid);
       padding: 0 10px 0 10px;
     }
   }
 
   &__node-link + &__node-link {
-    border-top: 1px solid get-color(gray1);
+    border-top: 1px solid set-color(gray, light);
   }
 }
