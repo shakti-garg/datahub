@@ -1,9 +1,9 @@
 .deprecated-dataset {
-  @include tag(set-color(red, maroonflush), set-color(white, base));
+  @include tag(get-color(red8), get-color(white));
   line-height: item-spacing(5);
 
   &--small {
-    font-size: 12px;
+    font-size: fs(small);
     line-height: 18px;
   }
 }
@@ -44,7 +44,7 @@
 .dataset-deprecation-header {
   margin-top: item-spacing(6);
   font-size: 18px;
-  font-weight: 500;
+  font-weight: fw(normal, 6);
 }
 
 .decommission-date {

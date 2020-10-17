@@ -1,17 +1,18 @@
 package com.linkedin.metadata.dao;
 
 import com.linkedin.common.AuditStamp;
-import com.linkedin.common.urn.Urn;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.metadata.dao.producer.BaseMetadataEventProducer;
 import com.linkedin.metadata.dao.retention.TimeBasedRetention;
 import com.linkedin.metadata.dao.retention.VersionBasedRetention;
 import com.linkedin.metadata.query.ExtraInfo;
+import com.linkedin.metadata.query.IndexFilter;
 import com.linkedin.testing.AspectFoo;
 import com.linkedin.testing.EntityAspectUnion;
 import com.linkedin.testing.urn.FooUrn;
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -19,11 +20,13 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.mockito.stubbing.OngoingStubbing;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static com.linkedin.metadata.utils.TestUtils.*;
+import static com.linkedin.metadata.utils.AuditStamps.*;
 import static org.mockito.Mockito.*;
 import static org.testng.Assert.*;
 
@@ -44,6 +47,12 @@ public class BaseLocalDAOTest {
     protected <ASPECT extends RecordTemplate> long saveLatest(FooUrn urn, Class<ASPECT> aspectClass, ASPECT oldEntry,
         AuditStamp oldAuditStamp, ASPECT newEntry, AuditStamp newAuditStamp) {
       return 0;
+    }
+
+    @Override
+    protected <ASPECT extends RecordTemplate> void updateLocalIndex(@Nonnull FooUrn urn,
+        @Nullable ASPECT newValue, long version) {
+
     }
 
     @Override
@@ -85,8 +94,13 @@ public class BaseLocalDAOTest {
     }
 
     @Override
-    public <ASPECT extends RecordTemplate> ListResult<Urn> listUrns(Class<ASPECT> aspectClass, int start,
+    public <ASPECT extends RecordTemplate> ListResult<FooUrn> listUrns(Class<ASPECT> aspectClass, int start,
         int pageSize) {
+      return null;
+    }
+
+    @Override
+    public ListResult<FooUrn> listUrns(@Nonnull IndexFilter indexFilter, @Nullable FooUrn lastUrn, int pageSize) {
       return null;
     }
 
@@ -113,9 +127,17 @@ public class BaseLocalDAOTest {
     }
 
     @Override
+    @Nonnull
     public Map<AspectKey<FooUrn, ? extends RecordTemplate>, Optional<? extends RecordTemplate>> get(
         Set<AspectKey<FooUrn, ? extends RecordTemplate>> aspectKeys) {
-      return null;
+      return Collections.emptyMap();
+    }
+
+    @Override
+    @Nonnull
+    public Map<AspectKey<FooUrn, ? extends RecordTemplate>, AspectWithExtraInfo<? extends RecordTemplate>> getWithExtraInfo(
+        @Nonnull Set<AspectKey<FooUrn, ? extends RecordTemplate>> keys) {
+      return Collections.emptyMap();
     }
   }
 

@@ -26,12 +26,12 @@
   &__author,
   &__creation {
     margin: item-spacing(0 1 1 3);
-    font-weight: fw(normal, 4);
+    font-weight: fw(normal, 6);
   }
 
   &__type {
     margin-left: auto;
-    color: set-color(grey, mid);
+    color: get-color(gray5);
     align-self: flex-start;
 
     &::before {

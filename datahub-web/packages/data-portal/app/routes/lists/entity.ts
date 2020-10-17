@@ -1,8 +1,9 @@
 import Route from '@ember/routing/route';
 import AuthenticatedRouteMixin from 'ember-simple-auth/mixins/authenticated-route-mixin';
-import { isDataModelBaseEntityName, DataModelEntity, DataModelName } from '@datahub/data-models/constants/entity';
-import { supportedListEntities } from '@datahub/lists/constants/entity/shared';
+import { DataModelName } from '@datahub/data-models/constants/entity';
 import Transition from '@ember/routing/-private/transition';
+import { inject as service } from '@ember/service';
+import DataModelsService from '@datahub/data-models/services/data-models';
 
 /**
  * Describes the ListEntity route transition object parameters
@@ -18,6 +19,16 @@ interface IListEntityTransitionParams {
  * @extends {Route.extend(AuthenticatedRouteMixin)}
  */
 export default class ListsEntity extends Route.extend(AuthenticatedRouteMixin) {
+  /**
+   * ListsEntity will use Data Models service to check if the entity is guarded or not
+   */
+  @service('data-models')
+  dataModels: DataModelsService;
+
+  /**
+   * Before loading the model we will check if list supports this entity type
+   * @param transition
+   */
   beforeModel(transition: Transition): void {
     // eslint-disable-next-line @typescript-eslint/camelcase
     const { entity_name: entity }: IListEntityTransitionParams =
@@ -37,11 +48,7 @@ export default class ListsEntity extends Route.extend(AuthenticatedRouteMixin) {
    * @memberof ListsEntity
    */
   checkEntitySupport(entity?: DataModelName): void {
-    if (
-      entity &&
-      isDataModelBaseEntityName(entity) &&
-      (supportedListEntities as Array<DataModelEntity>).includes(DataModelEntity[entity]) // Allow includes check for all data model entity types
-    ) {
+    if (entity && !this.dataModels.guards.isGuardedEntity(entity)) {
       return;
     }
 

@@ -30,11 +30,23 @@ the application directly from command line after a successful [build](#build):
 ./gradlew :gms:war:run
 ```
 
+## API Documentation
+
+You can access basic documentation on the API endpoints by opening the `/restli/docs` endpoint in the browser.
+```
+python -c "import webbrowser; webbrowser.open('http://localhost:8080/restli/docs', new=2)"
+```
+
 ## Sample API Calls
 
 ### Create user
 ```
 ➜ curl 'http://localhost:8080/corpUsers?action=ingest' -X POST -H 'X-RestLi-Protocol-Version:2.0.0' --data '{"snapshot": {"aspects": [{"com.linkedin.identity.CorpUserInfo":{"active": true, "displayName": "Foo Bar", "fullName": "Foo Bar", "email": "fbar@linkedin.com"}}, {"com.linkedin.identity.CorpUserEditableInfo":{}}], "urn": "urn:li:corpuser:fbar"}}'
+```
+
+### Create group
+```
+➜ curl 'http://localhost:8080/corpGroups?action=ingest' -X POST -H 'X-RestLi-Protocol-Version:2.0.0' --data '{"snapshot": {"aspects": [{"com.linkedin.identity.CorpGroupInfo":{"email": "dev@linkedin.com", "admins": ["urn:li:corpUser:jdoe"], "members": ["urn:li:corpUser:datahub", "urn:li:corpUser:jdoe"], "groups": []}}], "urn": "urn:li:corpGroup:dev"}}'
 ```
 
 ### Create dataset
@@ -53,6 +65,25 @@ the application directly from command line after a successful [build](#build):
     "active": true,
     "fullName": "Foo Bar",
     "email": "fbar@linkedin.com"
+  }
+}
+```
+
+### Get group
+```
+➜ curl 'http://localhost:8080/corpGroups/($params:(),name:dev)' -H 'X-RestLi-Protocol-Version:2.0.0' -s | jq
+{
+  "name": "dev",
+  "info": {
+    "groups": [],
+    "email": "dev@linkedin.com",
+    "admins": [
+      "urn:li:corpuser:jdoe"
+    ],
+    "members": [
+      "urn:li:corpuser:datahub",
+      "urn:li:corpuser:jdoe"
+    ]
   }
 }
 ```

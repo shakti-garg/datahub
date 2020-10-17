@@ -4,14 +4,14 @@ import { className, tagName } from '@ember-decorators/component';
 
 // RadioButton is a fragment, to allow DOM events, override with a DOM element
 @tagName('span')
-export default class RadioButtonComposer extends RadioButton {
+export default class RadioButtonComposer<T> extends RadioButton {
   /**
    * Specifies the className to be added to the component when the class has a disabled
    * property that evaluates to a truthy value
    * @type {string}
    * @memberof RadioButtonComposer
    */
-  disabledClass: string = '';
+  disabledClass = '';
 
   /**
    * Resolves the class name binding for a component instance that is disabled i.e.
@@ -38,7 +38,7 @@ export default class RadioButtonComposer extends RadioButton {
     return this.checked ? this.checkedClass : '';
   }
 
-  didReceiveAttrs() {
+  didReceiveAttrs(): void {
     super.didReceiveAttrs();
 
     // ensures that the values a supplied at the component call site
@@ -49,11 +49,24 @@ export default class RadioButtonComposer extends RadioButton {
     });
   }
 
+  didInsertElement(): void {
+    super.didInsertElement();
+    this.element.addEventListener('mouseenter', this.handleMouseEnter);
+    this.element.addEventListener('mouseleave', this.handleMouseLeave);
+  }
+
+  willDestroyElement(): void {
+    super.willDestroyElement();
+    this.element.removeEventListener('mouseenter', this.handleMouseEnter);
+    this.element.removeEventListener('mouseleave', this.handleMouseLeave);
+  }
+
   /**
    * Handles the mouseenter event on the component element and invokes
    * the external action if provided as an attribute
    */
-  mouseEnter() {
+  @action
+  handleMouseEnter(): void {
     const { onMouseEnter, value } = this;
     if (typeof onMouseEnter === 'function') {
       onMouseEnter({ value });
@@ -64,7 +77,8 @@ export default class RadioButtonComposer extends RadioButton {
    * Handles the mouseleave event on the component element and invokes
    * the external action if provided as an attribute
    */
-  mouseLeave() {
+  @action
+  handleMouseLeave(): void {
     const { onMouseLeave, value } = this;
     if (typeof onMouseLeave === 'function') {
       onMouseLeave({ value });
@@ -77,7 +91,7 @@ export default class RadioButtonComposer extends RadioButton {
    * if an onclick handler is provided it will be invoked
    * @memberof RadioButtonComposer
    */
-  click() {
+  click(): void {
     const { onclick, value } = this;
 
     typeof onclick === 'function' && onclick({ value });
@@ -90,7 +104,7 @@ export default class RadioButtonComposer extends RadioButton {
    * @param args
    */
   @action
-  changed(...args: Array<any>): void {
+  changed(...args: Array<T>): void {
     const { onChange } = this;
 
     if (typeof onChange === 'function') {

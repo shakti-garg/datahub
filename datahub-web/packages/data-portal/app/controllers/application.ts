@@ -1,9 +1,7 @@
 import Controller from '@ember/controller';
 import Session from 'ember-simple-auth/services/session';
-import Notifications from '@datahub/utils/services/notifications';
 import { inject as service } from '@ember/service';
 import { computed } from '@ember/object';
-import { DataModelEntity } from '@datahub/data-models/constants/entity';
 
 export default class Application extends Controller {
   /**
@@ -13,19 +11,6 @@ export default class Application extends Controller {
    */
   @service
   session: Session;
-
-  /**
-   * References the application notifications service
-   * @type {Notifications}
-   */
-  @service
-  notifications?: Notifications;
-
-  /**
-   * References the currently supported DataModelEntity for the Entity lists
-   * @memberof Application
-   */
-  listEntity?: DataModelEntity;
 
   /**
    * Will determine whether of not show search hero component
